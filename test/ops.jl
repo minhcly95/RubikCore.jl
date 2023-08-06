@@ -1,11 +1,4 @@
 @testset "Operations" begin
-    SEXY_MOVE = R * U * R' * U'
-    REVERSED_SEXY = U * R * U' * R'
-    MIRRORED_SEXY = L' * U' * L * U
-    REVERSED_MIRRORED_SEXY = U' * L' * U * L
-    SLEDGEHAMMER = R' * F * R * F'
-    HEDGEHAMMER = F * R' * F' * R
-
     @testset "Face to move" begin
         for (f, m) in zip((Up, Front, Right, Down, Back, Left), (U, F, R, D, B, L))
             @test f^0 == I
@@ -16,7 +9,7 @@
     end
 
     @testset "Move inverse" begin
-        for m in ALL_MOVES
+        for m in BASIC_MOVES
             @test inv(m) == m'
             @test m' * m == I
             @test m * m' == I
@@ -24,7 +17,7 @@
     end
 
     @testset "Move power" begin
-        for m in ALL_MOVES
+        for m in BASIC_MOVES
             @test m^0 == m^4 == m^-4 == I
             @test m^1 == m^5 == m^-3 == m
             @test m^2 == m^-2 == m'^2
@@ -51,8 +44,8 @@
 
     @testset "Sequence multiplication" begin
         for _ in 1:100
-            seq1 = rand(ALL_MOVES, 50)
-            seq2 = rand(ALL_MOVES, 50)
+            seq1 = rand(BASIC_MOVES, 50)
+            seq2 = rand(BASIC_MOVES, 50)
             seq3 = vcat(seq1, seq2)
             a = prod(seq1)
             b = prod(seq2)
@@ -63,7 +56,7 @@
 
     @testset "Sequence inverse" begin
         for _ in 1:100
-            seq = rand(ALL_MOVES, 50)
+            seq = rand(BASIC_MOVES, 50)
             inv_seq = reverse!(inv.(seq))
             a = prod(seq)
             b = prod(inv_seq)
@@ -75,7 +68,7 @@
 
     @testset "Sequence power" begin
         for _ in 1:100
-            seq = rand(ALL_MOVES, 50)
+            seq = rand(BASIC_MOVES, 50)
             seq2 = vcat(seq, seq)
             seq3 = vcat(seq, seq2)
             seq5 = vcat(seq2, seq3)

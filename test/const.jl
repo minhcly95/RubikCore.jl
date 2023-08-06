@@ -1,0 +1,6 @@
+SEXY_MOVE = prod([R, U, R', U'])
+REVERSED_SEXY = prod([U, R, U', R'])
+MIRRORED_SEXY = prod([L', U', L, U])
+REVERSED_MIRRORED_SEXY = prod([U', L', U, L])
+SLEDGEHAMMER = prod([R', F, R, F'])
+HEDGEHAMMER = prod([F, R', F', R])

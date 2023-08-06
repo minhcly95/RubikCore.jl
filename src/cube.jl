@@ -35,3 +35,8 @@ const _CORNER_ORI_NEG_STRIP = Tuple([_corner_val(0, (3 - _corner_ori(i)) % 3) fo
 @inline _corner_ori_dec(v::Int) = @inbounds _CORNER_ORI_DEC[v + 1]
 @inline _corner_ori_add(v1::Int, v2::Int) = @inbounds _MOD24[v1 + v2 & 0b11000 + 1]
 @inline _corner_ori_sub(v1::Int, v2::Int) = @inbounds v1 + _CORNER_ORI_NEG_STRIP[v2 + 1]
+
+# Identity cube
+const _IDENTITY_CUBE = Cube(Tuple(_corner_val(i, 0) for i in 0:7), Tuple(_edge_val(i, 0) for i in 0:11))
+@inline Cube() = _IDENTITY_CUBE
+Base.one(::Type{Cube}) = Cube()
