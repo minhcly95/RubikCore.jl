@@ -11,6 +11,8 @@ struct Cube
     end
 end
 
+@inline Base.copy(c::Cube) = c
+
 # State accessors
 @inline _edge_perm(v::Int) = v >> 1
 @inline _edge_ori(v::Int) = v & 1

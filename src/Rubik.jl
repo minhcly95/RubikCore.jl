@@ -2,12 +2,15 @@ module Rubik
 
 using StaticArrays
 using Random
+using Crayons
 
 include("utils.jl")
 include("cube.jl")
 include("ops.jl")
 include("move.jl")
 include("print.jl")
+include("display.jl")
+include("random.jl")
 
 export Cube
 export Face, Up, Front, Right, Down, Back, Left

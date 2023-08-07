@@ -5,4 +5,5 @@ using Test
     include("const.jl")
     include("ops.jl")
     include("print.jl")
+    include("display.jl")
 end

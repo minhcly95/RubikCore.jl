@@ -76,3 +76,7 @@ end
 @inline Base.inv(f::Face) = Move(f, -1)
 @inline Base.adjoint(f::Face) = inv(f)
 @inline Base.literal_pow(::typeof(^), f::Face, ::Val{p}) where {p} = Move(f, p)
+
+# Constructors from sequence
+Move(ms::AbstractVector{Move}) = prod(ms)
+Cube(ms::AbstractVector{Move}) = Cube(prod(ms))
