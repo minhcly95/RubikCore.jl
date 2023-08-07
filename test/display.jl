@@ -5,7 +5,8 @@
         displayed = String(take!(io))
 
         # Strip all escape sequences and non-breaking spaces
-        displayed = replace(displayed, r"\e\[.+?m" => "", Char(160) => " ")
+        displayed = replace(displayed, r"\e\[.+?m" => "")
+        displayed = replace(displayed, Char(160) => " ")
         # Remove all trailing whitespaces for each line
         displayed = replace(displayed, r" *$"m => "")
 
