@@ -28,6 +28,24 @@
             @test !is_mirrored(rand(Symm))
         end
     end
+    
+    @testset "Move remap" begin
+        @test remap(symm"UFR", U) == U
+        @test remap(symm"UFR", F) == F
+        @test remap(symm"UFR", R) == R
+
+        @test remap(symm"UFL", U) == U'
+        @test remap(symm"UFL", F) == F'
+        @test remap(symm"UFL", R) == L'
+        
+        @test remap(symm"RFD", U) == R
+        @test remap(symm"RFD", F) == F
+        @test remap(symm"RFD", R) == D
+
+        @test remap(symm"FLU", U) == F'
+        @test remap(symm"FLU", F) == L'
+        @test remap(symm"FLU", R) == U'
+    end
 
     @testset "Sequence multiplication" begin
         for _ in 1:100

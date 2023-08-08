@@ -9,11 +9,14 @@ struct Symm
 end
 Symm() = Symm(1)
 
-const ALL_SYMMS = Tuple(Symm(i) for i in 1:NSYMMS)
-const UNMIRRORED_SYMMS = Tuple(Symm(i) for i in 1:2:NSYMMS)
-const MIRRORED_SYMMS = Tuple(Symm(i) for i in 2:2:NSYMMS)
+Cube(s::Symm) = s
+Base.copy(s::Symm) = s
 
-is_mirrored(s::Symm) = iseven(s.m)
+const ALL_SYMMS = Tuple(Symm(i) for i in 1:NSYMMS)
+
+is_mirrored(s::Symm) = iseven(mod1(s.m, 8)) ⊻ iseven(fld1(s.m, 8))
+const UNMIRRORED_SYMMS = Tuple(filter(!is_mirrored, ALL_SYMMS))
+const MIRRORED_SYMMS = Tuple(filter(is_mirrored, ALL_SYMMS))
 
 # Lookup tables
 const _SYMM_PERMUTE_MAP = ("UFR", "URF", "FRU", "FUR", "RUF", "RFU")
@@ -53,6 +56,7 @@ remap(s::Symm, f::Face) = @inbounds _SYMM_FACE[s.m][Int(f)]
 Base.:*(a::Symm, b::Symm) = @inbounds Symm(_SYMM_MUL[a.m][b.m])
 Base.inv(s::Symm) = @inbounds Symm(_SYMM_INV[s.m])
 Base.adjoint(s::Symm) = inv(s)
+Base.:^(s::Symm, p::Integer) = Base.power_by_squaring(s, p)
 
 # Whole cube rotation
 function _make_symm_rot()

@@ -73,4 +73,14 @@
             @test Symm(str) == s
         end
     end
+
+    @testset "SCube parse" begin
+        for _ in 1:100
+            seq = rand(Move, 50)
+            symm = rand(ALL_SYMMS)
+            sc = SCube(symm, prod(seq))
+            str = singmaster(sc)
+            @test parse(SCube, str) == sc
+        end
+    end
 end

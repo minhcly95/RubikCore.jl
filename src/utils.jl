@@ -45,3 +45,17 @@ macro _tuple_for(itr, expr)
 
     return t_expr
 end
+
+# Insert the power for literal numbers
+macro _insert_literal_pow(type)
+    type = esc(type)
+    return quote
+        @inline Base.literal_pow(::typeof(^), c::$type, ::Val{-3}) = inv(c*c*c)
+        @inline Base.literal_pow(::typeof(^), c::$type, ::Val{-2}) = inv(c*c)
+        @inline Base.literal_pow(::typeof(^), c::$type, ::Val{-1}) = inv(c)
+        @inline Base.literal_pow(::typeof(^), c::$type, ::Val{0}) = $type()
+        @inline Base.literal_pow(::typeof(^), c::$type, ::Val{1}) = c
+        @inline Base.literal_pow(::typeof(^), c::$type, ::Val{2}) = c*c
+        @inline Base.literal_pow(::typeof(^), c::$type, ::Val{3}) = c*c*c
+    end
+end

@@ -12,7 +12,7 @@
 
         # DO NOT add or remove any space lest ruining the test
         reference = """
-        3x3x3 Rubik Cube:
+        3x3x3 Cube:
                   U  U  U
                   U  U  U
                   U  U  U

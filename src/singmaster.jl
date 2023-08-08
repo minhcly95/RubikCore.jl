@@ -38,5 +38,6 @@ function parse_singmaster(str::AbstractString)
         isnothing(v) && error("No such corner ($(cubies[i+12]))")
         c[_corner_perm(v - 1) + 1] = _corner_ori_sub(_SM_CORNER_ORDER[i], v - 1)
     end
+    # Verify the given cube is valid
     return Cube(Tuple(c), Tuple(e))
 end

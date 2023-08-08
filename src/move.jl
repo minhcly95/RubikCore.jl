@@ -5,6 +5,8 @@ const NMOVES = NFACES * NTWISTS
 struct Move
     cube::Cube
 end
+
+@inline Move(m::Move) = m
 @inline Cube(m::Move) = m.cube
 
 # Move operations

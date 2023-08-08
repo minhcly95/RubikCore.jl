@@ -5,3 +5,5 @@ Base.rand(rng::AbstractRNG, ::Random.SamplerType{Move}) = rand(rng, BASIC_MOVES)
 Base.rand(rng::AbstractRNG, ::Random.SamplerType{Cube}) = Cube(rand(rng, BASIC_MOVES, 30))
 
 Base.rand(rng::AbstractRNG, ::Random.SamplerType{Symm}) = rand(rng, UNMIRRORED_SYMMS)
+
+Base.rand(rng::AbstractRNG, ::Random.SamplerType{SCube}) = SCube(rand(rng, Symm), rand(rng, Cube))

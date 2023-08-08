@@ -6,11 +6,16 @@ struct Cube
     e::NTuple{12, Int}
     
     Base.@propagate_inbounds function Cube(c, e)
-        @boundscheck all(in(ALL_STATES), c) && all(in(ALL_STATES), e) || error("Invalid cubies state")
+        @boundscheck begin
+            all(in(ALL_STATES), c) && all(in(ALL_STATES), e) || error("Invalid cubies state")
+            sort(collect(_corner_perm(i) for i in c)) == collect(0:7) || error("Invalid corner permutation")
+            sort(collect(_edge_perm(i) for i in e)) == collect(0:11) || error("Invalid edge permutation")
+        end
         new(c, e)
     end
 end
 
+@inline Cube(c::Cube) = c
 @inline Base.copy(c::Cube) = c
 
 # State accessors
