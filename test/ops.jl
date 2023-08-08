@@ -7,6 +7,22 @@
             @test f' == m^3
         end
     end
+    
+    @testset "Cube identity" begin
+        for _ in 1:100
+            c = rand(Cube)
+            @test c * Cube() == c
+            @test Cube() * c == c
+        end
+    end
+
+    @testset "Move identity" begin
+        @test I * I == I
+        for m in BASIC_MOVES
+            @test m * I == m
+            @test I * m == m
+        end
+    end
 
     @testset "Move inverse" begin
         for m in BASIC_MOVES
@@ -38,14 +54,16 @@
         for T in [SEXY_MOVE, REVERSED_SEXY, MIRRORED_SEXY, REVERSED_MIRRORED_SEXY, SLEDGEHAMMER, HEDGEHAMMER]
             @test T^6 == I
         end
+        @test CIRCLE^5 == I
+        @test ANTI_CIRCLE^5 == I
         @test (R * U')^63 == I
         @test (R2 * U2)^6 == I
     end
 
     @testset "Sequence multiplication" begin
         for _ in 1:100
-            seq1 = rand(BASIC_MOVES, 50)
-            seq2 = rand(BASIC_MOVES, 50)
+            seq1 = rand(Move, 50)
+            seq2 = rand(Move, 50)
             seq3 = vcat(seq1, seq2)
             a = prod(seq1)
             b = prod(seq2)
@@ -56,7 +74,7 @@
 
     @testset "Sequence inverse" begin
         for _ in 1:100
-            seq = rand(BASIC_MOVES, 50)
+            seq = rand(Move, 50)
             inv_seq = reverse!(inv.(seq))
             a = prod(seq)
             b = prod(inv_seq)
@@ -68,7 +86,7 @@
 
     @testset "Sequence power" begin
         for _ in 1:100
-            seq = rand(BASIC_MOVES, 50)
+            seq = rand(Move, 50)
             seq2 = vcat(seq, seq)
             seq3 = vcat(seq, seq2)
             seq5 = vcat(seq2, seq3)

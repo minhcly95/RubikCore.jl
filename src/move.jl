@@ -1,11 +1,7 @@
-const NFACES = 6
 const NTWISTS = 3
 const NMOVES = NFACES * NTWISTS
 
 # Definitions
-@enum Face Up=1 Front Right Down Back Left
-const ALL_FACES = instances(Face)
-
 struct Move
     cube::Cube
 end
@@ -33,8 +29,7 @@ function _make_fundamental_moves()
     edge_trans = [v for _ in ALL_FACES, v in 0:(NSTATES-1)]
     corner_trans = [v for _ in ALL_FACES, v in 0:(NSTATES-1)]
 
-    for face in ALL_FACES
-        f = Int(face)
+    for f in 1:NFACES
         for i in 1:4
             ii = mod1(i + 1, 4)
             for o in 0:1
@@ -80,3 +75,53 @@ end
 # Constructors from sequence
 Move(ms::AbstractVector{Move}) = prod(ms)
 Cube(ms::AbstractVector{Move}) = Cube(prod(ms))
+
+# Print
+Base.show(io::IO, m::Move) = _show_move(io, Val(m))
+
+_show_move(io::IO, ::Val{I}) = print(io, "I")
+
+_show_move(io::IO, ::Val{U}) = print(io, "U")
+_show_move(io::IO, ::Val{F}) = print(io, "F")
+_show_move(io::IO, ::Val{R}) = print(io, "R")
+_show_move(io::IO, ::Val{D}) = print(io, "D")
+_show_move(io::IO, ::Val{B}) = print(io, "B")
+_show_move(io::IO, ::Val{L}) = print(io, "L")
+
+_show_move(io::IO, ::Val{U2}) = print(io, "U2")
+_show_move(io::IO, ::Val{F2}) = print(io, "F2")
+_show_move(io::IO, ::Val{R2}) = print(io, "R2")
+_show_move(io::IO, ::Val{D2}) = print(io, "D2")
+_show_move(io::IO, ::Val{B2}) = print(io, "B2")
+_show_move(io::IO, ::Val{L2}) = print(io, "L2")
+
+_show_move(io::IO, ::Val{U3}) = print(io, "U'")
+_show_move(io::IO, ::Val{F3}) = print(io, "F'")
+_show_move(io::IO, ::Val{R3}) = print(io, "R'")
+_show_move(io::IO, ::Val{D3}) = print(io, "D'")
+_show_move(io::IO, ::Val{B3}) = print(io, "B'")
+_show_move(io::IO, ::Val{L3}) = print(io, "L'")
+
+_show_move(io::IO, ::Val{m}) where {m} = print(io, "Move($(singmaster(Cube(m))))")
+
+singmaster(m::Move) = singmaster(Cube(m))
+
+# Parse
+Base.parse(::Type{Move}, str::AbstractString) = parse_move(str)
+Base.parse(::Type{Vector{Move}}, str::AbstractString) = parse_sequence(str)
+
+macro seq_str(str)
+    return :(parse_sequence($(esc(str))))
+end
+
+const _WORD_DICT = Dict(
+    "U" => U, "U1" => U, "U+" => U, "U2" => U2, "UU" => U2, "U'" => U3, "U3" => U3, "U-" => U3,
+    "F" => F, "F1" => F, "F+" => F, "F2" => F2, "FF" => F2, "F'" => F3, "F3" => F3, "F-" => F3,
+    "R" => R, "R1" => R, "R+" => R, "R2" => R2, "RR" => R2, "R'" => R3, "R3" => R3, "R-" => R3,
+    "D" => D, "D1" => D, "D+" => D, "D2" => D2, "DD" => D2, "D'" => D3, "D3" => D3, "D-" => D3,
+    "B" => B, "B1" => B, "B+" => B, "B2" => B2, "BB" => B2, "B'" => B3, "B3" => B3, "B-" => B3,
+    "L" => L, "L1" => L, "L+" => L, "L2" => L2, "LL" => L2, "L'" => L3, "L3" => L3, "L-" => L3,
+)
+
+parse_move(str::AbstractString) = haskey(_WORD_DICT, str) ? _WORD_DICT[str] : error("No such move ($str)")
+parse_sequence(str::AbstractString) = [parse_move(s) for s in split(str)]

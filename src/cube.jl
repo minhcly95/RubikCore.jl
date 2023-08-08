@@ -42,3 +42,9 @@ const _CORNER_ORI_NEG_STRIP = Tuple([_corner_val(0, (3 - _corner_ori(i)) % 3) fo
 const _IDENTITY_CUBE = Cube(Tuple(_corner_val(i, 0) for i in 0:7), Tuple(_edge_val(i, 0) for i in 0:11))
 @inline Cube() = _IDENTITY_CUBE
 Base.one(::Type{Cube}) = Cube()
+
+# Print
+Base.show(io::IO, c::Cube) = print(io, "Cube($(singmaster(c)))")
+
+# Parse
+Base.parse(::Type{Cube}, str::AbstractString) = parse_singmaster(str)

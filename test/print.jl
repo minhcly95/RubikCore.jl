@@ -22,7 +22,7 @@
 
     @testset "Cube parse" begin
         for _ in 1:100
-            seq = rand(BASIC_MOVES, 50)
+            seq = rand(Move, 50)
             cube = Cube(prod(seq))
             str = singmaster(cube)
             @test parse(Cube, str) == cube
@@ -58,10 +58,19 @@
 
     @testset "Sequence parse" begin
         for _ in 1:100
-            seq = rand(BASIC_MOVES, 50)
+            seq = rand(Move, 50)
             seq_str = join(string.(seq), " ")
             seq_parse = parse(Vector{Move}, seq_str)
             @test seq == seq_parse
+        end
+    end
+
+    @testset "Symm parse" begin
+        for _ in 1:100
+            s = rand(ALL_SYMMS)
+            str = string(s)[6:8]
+            @test string(s) == "Symm($str)"
+            @test Symm(str) == s
         end
     end
 end
