@@ -1,55 +1,80 @@
-const NSTATES = 24
-const ALL_STATES = 0:(NSTATES-1)
-
 struct Cube
-    c::NTuple{8, Int}
-    e::NTuple{12, Int}
-    
-    Base.@propagate_inbounds function Cube(c, e)
+    center::Symm
+    edges::NTuple{NEDGES, Edge}
+    corners::NTuple{NCORNERS, Corner}
+
+    Base.@propagate_inbounds function Cube(center, edges, corners)
         @boundscheck begin
-            all(in(ALL_STATES), c) && all(in(ALL_STATES), e) || error("Invalid cubies state")
-            sort(collect(_corner_perm(i) for i in c)) == collect(0:7) || error("Invalid corner permutation")
-            sort(collect(_edge_perm(i) for i in e)) == collect(0:11) || error("Invalid edge permutation")
+            eperm = Int.(perm.(edges))
+            (sort!(collect(eperm)) == 1:NEDGES) || throw(ArgumentError("invalid edge permutation: $eperm"))
+            cperm = Int.(perm.(corners))
+            (sort!(collect(cperm)) == 1:NCORNERS) || throw(ArgumentError("invalid corner permutation: $cperm"))
         end
-        new(c, e)
+        new(center, edges, corners)
     end
 end
 
-@inline Cube(c::Cube) = c
-@inline Base.copy(c::Cube) = c
-
-# State accessors
-@inline _edge_perm(v::Int) = v >> 1
-@inline _edge_ori(v::Int) = v & 1
-@inline _corner_perm(v::Int) = v & 0b111
-@inline _corner_ori(v::Int) = v >> 3
-
-# State constructors
-@inline _edge_val(perm::Int, ori::Int) = perm << 1 + ori
-@inline _corner_val(perm::Int, ori::Int) = ori << 3 + perm
-
-# Edge operators
-@inline _edge_flip(v::Int) = v ⊻ 1
-@inline _edge_ori_add(v1::Int, v2::Int) = v1 ⊻ _edge_ori(v2)
-
-# Corner operators (cached)
-const _MOD24 = Tuple(Int[i % NSTATES for i in 0:(2*NSTATES - 1)])
-const _CORNER_ORI_INC = Tuple([_corner_val(_corner_perm(i), (_corner_ori(i) + 1) % 3) for i in 0:(NSTATES - 1)])
-const _CORNER_ORI_DEC = Tuple([_corner_val(_corner_perm(i), (_corner_ori(i) + 2) % 3) for i in 0:(NSTATES - 1)])
-const _CORNER_ORI_NEG_STRIP = Tuple([_corner_val(0, (3 - _corner_ori(i)) % 3) for i in 0:(NSTATES - 1)])
-
-@inline _corner_ori_inc(v::Int) = @inbounds _CORNER_ORI_INC[v + 1]
-@inline _corner_ori_dec(v::Int) = @inbounds _CORNER_ORI_DEC[v + 1]
-@inline _corner_ori_add(v1::Int, v2::Int) = @inbounds _MOD24[v1 + v2 & 0b11000 + 1]
-@inline _corner_ori_sub(v1::Int, v2::Int) = @inbounds v1 + _CORNER_ORI_NEG_STRIP[v2 + 1]
+Cube(c::Cube) = c
+Base.copy(c::Cube) = c
 
 # Identity cube
-const _IDENTITY_CUBE = Cube(Tuple(_corner_val(i, 0) for i in 0:7), Tuple(_edge_val(i, 0) for i in 0:11))
-@inline Cube() = _IDENTITY_CUBE
+const _IDENTITY_CUBE = Cube(Symm(), Tuple(Edge(i, 1) for i in 1:NEDGES), Tuple(Corner(i, 1) for i in 1:NCORNERS))
+Cube() = _IDENTITY_CUBE
+
+Base.one(::Cube) = Cube()
 Base.one(::Type{Cube}) = Cube()
 
+# Mirrored
+is_mirrored(c::Cube) = is_mirrored(c.center)
+
+# Multiplication
+function Base.:*(a::Cube, b::Cube)
+    ds = a.center * b.center
+    de = MVector{NEDGES, Edge}(undef)
+    dc = MVector{NCORNERS, Corner}(undef)
+    for i = 1:NEDGES
+        ae = a.edges[i]
+        @inbounds de[i] = ori_add(b.edges[perm(ae)], ori(ae))
+    end
+    for i = 1:NCORNERS
+        ac = a.corners[i]
+        @inbounds dc[i] = ori_add(b.corners[perm(ac)], ori(ac))
+    end
+    return @inbounds Cube(ds, Tuple(de), Tuple(dc))
+end
+
+# Inverse
+function Base.inv(c::Cube)
+    ds = c.center'
+    de = MVector{NEDGES, Edge}(undef)
+    dc = MVector{NCORNERS, Corner}(undef)
+    for i = 1:NEDGES
+        ce = c.edges[i]
+        @inbounds de[perm(ce)] = _unsafe_edge(i, ori(ce))
+    end
+    for i = 1:NCORNERS
+        cc = c.corners[i]
+        @inbounds dc[perm(cc)] = ori_sub(_unsafe_corner(i, 1), ori(cc))
+    end
+    return @inbounds Cube(ds, Tuple(de), Tuple(dc))
+end
+Base.adjoint(c::Cube) = inv(c)
+
+# Power
+Base.:^(c::Cube, p::Integer) = p >= 0 ? Base.power_by_squaring(c, p) : Base.power_by_squaring(c', -p)
+
+Base.literal_pow(::typeof(^), c::Cube, ::Val{-3}) = inv(c*c*c)
+Base.literal_pow(::typeof(^), c::Cube, ::Val{-2}) = inv(c*c)
+Base.literal_pow(::typeof(^), c::Cube, ::Val{-1}) = inv(c)
+Base.literal_pow(::typeof(^), c::Cube, ::Val{0}) = Cube()
+Base.literal_pow(::typeof(^), c::Cube, ::Val{1}) = c
+Base.literal_pow(::typeof(^), c::Cube, ::Val{2}) = c*c
+Base.literal_pow(::typeof(^), c::Cube, ::Val{3}) = c*c*c
+
 # Print
-Base.show(io::IO, c::Cube) = print(io, "Cube($(singmaster(c)))")
+Base.print(io::IO, c::Cube) = print(io, singmaster(c))
+Base.show(io::IO, c::Cube) = print(io, "Cube(\"$c\")")
 
 # Parse
 Base.parse(::Type{Cube}, str::AbstractString) = parse_singmaster(str)
+Cube(str::AbstractString) = parse(Cube, str)

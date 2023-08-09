@@ -4,25 +4,28 @@ using StaticArrays
 using Random
 using Crayons
 
-include("utils.jl")
-include("cube.jl")
-include("ops.jl")
 include("face.jl")
-include("move.jl")
-include("singmaster.jl")
 include("symm.jl")
-include("s-cube.jl")
+include("cubies.jl")
+include("cube.jl")
+include("move.jl")
+include("rotate.jl")
+include("literal-moves.jl")
+include("singmaster.jl")
 include("display.jl")
 include("random.jl")
 
-export Cube
-export Face, Up, Front, Right, Down, Back, Left, opposite
-export Move, I, U, F, R, D, B, L
-export U1, U2, U3, F1, F2, F3, R1, R2, R3, D1, D2, D3, B1, B2, B3, L1, L2, L3
-export Symm, is_mirrored, remap
-export SCube, normalize, is_congruent
+export Face, Up, Front, Right, Down, Back, Left, opposite, ALL_FACES
+export Symm, is_mirrored, @symm_str, ALL_SYMMS, UNMIRRORED_SYMMS, MIRRORED_SYMMS
+export Edge, Corner, perm, ori
+export Cube, singmaster, parse_singmaster
+export Move, I, @seq_str
+export rotate, normalize, is_congruent
 
-export ALL_FACES, BASIC_MOVES, ALL_SYMMS, UNMIRRORED_SYMMS, MIRRORED_SYMMS
-export singmaster, @seq_str, @symm_str
+export FACE_TURNS, CUBE_ROTATIONS, SLICE_TURNS, WIDE_TURNS
+@_export_move_powers(1:3, U, F, R, D, B, L)
+@_export_move_powers(1:3, x, y, z)
+@_export_move_powers(1:3, M, E, S)
+@_export_move_powers(1:3, u, f, r, d, b, l)
 
 end

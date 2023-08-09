@@ -1,17 +1,39 @@
 const NFACES = 6
 
-@enum Face Up=1 Front Right Down Back Left
-const ALL_FACES = instances(Face)
+# Struct
+struct Face
+    f::UInt8
+    function Face(f::Integer)
+        (1 <= f <= NFACES) || throw(ArgumentError("invalid value for Face: $f"))
+        return new(f)
+    end
+end
 
-opposite(f::Face) = Face(mod1(Int(f) + 3, 6))
+Base.Int(f::Face) = Int(f.f)
 
-# Face from char
-const _CHAR_TO_FACE = Dict('U' => Up, 'F' => Front, 'R' => Right, 'D' => Down, 'B' => Back, 'L' => Left)
-const _FACE_TO_CHAR = Dict(reverse.(collect(_CHAR_TO_FACE)))
+# Literal faces
+const Up = Face(1)
+const Front = Face(2)
+const Right = Face(3)
+const Down = Face(4)
+const Back = Face(5)
+const Left = Face(6)
 
-Face(c::Char) = haskey(_CHAR_TO_FACE, c) ? _CHAR_TO_FACE[c] : error("Invalid face ($c)")
+const ALL_FACES = (Up, Front, Right, Down, Back, Left)
 
-Face(s::String) = length(s) == 1 ? Face(s[1]) : error("Invalid face ($s)")
+# Opposite face
+const _OPPOSITE_FACE = (Down, Back, Left, Up, Front, Right)
+opposite(f::Face) = @inbounds _OPPOSITE_FACE[Int(f)]
 
-# Face to char
-Base.Char(f::Face) = _FACE_TO_CHAR[f]
+# Print and parse
+const _FACE_CHARS = ('U', 'F', 'R', 'D', 'B', 'L')
+const _FACE_STRS = ("Up", "Front", "Right", "Down", "Back", "Left")
+
+Base.Char(f::Face) = @inbounds _FACE_CHARS[Int(f)]
+Base.show(io::IO, f::Face) = print(io, @inbounds _FACE_STRS[Int(f)])
+
+function Face(c::Char)
+    f = findfirst(==(c), _FACE_CHARS)
+    isnothing(f) && throw(ArgumentError("invalid character for Face: $c"))
+    return Face(f)
+end

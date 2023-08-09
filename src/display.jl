@@ -3,14 +3,7 @@ function Base.show(io::IO, ::MIME"text/plain", c::Cube)
     print_net(io, c)
 end
 
-function Base.show(io::IO, ::MIME"text/plain", sc::SCube)
-    println(io, "3x3x3 SCube:")
-    print_net(io, sc)
-end
-
-print_net(io::IO, c::Cube) = print_net(io, SCube(c))
-
-function print_net(io::IO, sc::SCube)
+function print_net(io::IO, c::Cube)
     FACE_CRAYONS = Dict(
         'U' => crayon"fg:black bg:white",
         'F' => crayon"fg:white bg:green",
@@ -24,12 +17,14 @@ function print_net(io::IO, sc::SCube)
 
     print_square(f) = print(io, FACE_CRAYONS[f], "$NBSP$f$NBSP")
     function print_row(net_face, row)
-        @_for(i = 1:3, print_square(net_face[(row-1)*3 + i]))
+        for i in 1:3
+            print_square(net_face[(row-1)*3 + i])
+        end
     end
     print_emptyrow() = print(io, DEF_CRAYON, NBSP^9)
     print_newline() = println(io, DEF_CRAYON, NBSP)
 
-    net = _get_net(sc)
+    net = _get_net(c)
 
     for i in 1:3
         print_emptyrow(); print_row(net[1], i); print_emptyrow(); print_emptyrow(); print_newline()
@@ -46,12 +41,13 @@ end
 macro _net_face_from_sm(sm, i1, i2, i3, i4, f, i5, i6, i7, i8)
     sm = esc(sm)
     f = esc(f)
-    return :(($sm[$i1+6], $sm[$i2+6], $sm[$i3+6], $sm[$i4+6], $f, $sm[$i5+6], $sm[$i6+6], $sm[$i7+6], $sm[$i8+6]))
+    return :(($sm[$i1], $sm[$i2], $sm[$i3], $sm[$i4], $f, $sm[$i5], $sm[$i6], $sm[$i7], $sm[$i8]))
 end
 
-function _get_net(sc::SCube)
-    sm = singmaster(sc)
-    centers = Char.(remap(sc.symm, f) for f in ALL_FACES)
+function _get_net(c::Cube)
+    sm = singmaster(c)
+    centers = Char.(rotate(f, c.center') for f in ALL_FACES)
+    sm = sm[7:end]
     return (
         @_net_face_from_sm(sm, 45, 7, 41, 10, centers[1], 4, 49, 1, 37),
         @_net_face_from_sm(sm, 51, 2, 38, 28, centers[2], 25, 58, 14, 55),

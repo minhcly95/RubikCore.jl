@@ -1,43 +1,57 @@
-const _SM_EDGES = (
-    "UB", "BU", "UL", "LU", "UR", "RU", "UF", "FU",
-    "LB", "BL", "RB", "BR", "LF", "FL", "RF", "FR",
-    "DB", "BD", "DL", "LD", "DR", "RD", "DF", "FD")
-const _SM_CORNERS = (
-    "UBL", "URB", "ULF", "UFR", "DLB", "DBR", "DFL", "DRF",
-    "LUB", "BUR", "FUL", "RUF", "BDL", "RDB", "LDF", "FDR",
-    "BLU", "RBU", "LFU", "FRU", "LBD", "BRD", "FLD", "RFD",
-    "ULB", "UBR", "UFL", "URF", "DBL", "DRB", "DLF", "DFR",
-    "LBU", "BRU", "FLU", "RFU", "BLD", "RBD", "LFD", "FRD",
-    "BUL", "RUB", "LUF", "FUR", "LDB", "BDR", "FDL", "RDF")
-
 const _SM_SOLVED = "UF UR UB UL DF DR DB DL FR FL BR BL UFR URB UBL ULF DRF DFL DLB DBR"
 
-const _SM_EDGE_ORDER = Tuple(_edge_perm(findfirst(==(str), _SM_EDGES) - 1) for str in split(_SM_SOLVED)[1:12])
-const _SM_EDGE_FLIPPED = Tuple(_edge_ori(findfirst(==(str), _SM_EDGES) - 1) for str in split(_SM_SOLVED)[1:12])
-const _SM_CORNER_ORDER = Tuple(_corner_perm(findfirst(==(str), _SM_CORNERS) - 1) for str in split(_SM_SOLVED)[13:end])
+const _SM_EDGE_ORDER = Tuple(perm(ALL_EDGES[findfirst(==(str), _EDGE_STRS)]) for str in split(_SM_SOLVED)[1:12])
+const _SM_EDGE_FLIPPED = Tuple(ori(ALL_EDGES[findfirst(==(str), _EDGE_STRS)]) for str in split(_SM_SOLVED)[1:12])
+const _SM_CORNER_ORDER = Tuple(perm(ALL_CORNERS[findfirst(==(str), _CORNER_STRS)]) for str in split(_SM_SOLVED)[13:end])
 
 function singmaster(c::Cube)
     d = inv(c)
-    estr = [_SM_EDGES[d.e[_SM_EDGE_ORDER[i] + 1] ⊻ _SM_EDGE_FLIPPED[i] + 1] for i in 1:12]
-    cstr = [_SM_CORNERS[d.c[_SM_CORNER_ORDER[i] + 1] + 1] for i in 1:8]
-    return join(vcat(estr, cstr), " ")
+    sstr = string(d.center)
+    estr = [_EDGE_STRS[Int(ori_add(d.edges[_SM_EDGE_ORDER[i]], _SM_EDGE_FLIPPED[i]))] for i in 1:NEDGES]
+    if !is_mirrored(c)
+        cstr = [_CORNER_STRS[Int(d.corners[_SM_CORNER_ORDER[i]])] for i in 1:NCORNERS]
+    else
+        cstr = [_CORNER_STRS[Int(ori_neg(d.corners[_SM_CORNER_ORDER[i]])) + NSTATES] for i in 1:NCORNERS]
+    end
+    return "[$sstr] " * join(vcat(estr, cstr), " ")
 end
 
 function parse_singmaster(str::AbstractString)
     cubies = split(str)
+
+    # Center
+    s = Symm()
+    mirrored = false
+    if first(cubies[1]) == '['
+        s = Symm(popfirst!(cubies)[2:end-1])'
+        mirrored = is_mirrored(s)
+    end
+
     length(cubies) == 20 || error("Singmaster's notation must have exactly 20 cubies")
-    c = MVector{8, Int}(undef)
-    e = MVector{12, Int}(undef)
-    for i in 1:12
-        v = findfirst(==(cubies[i]), _SM_EDGES)
-        isnothing(v) && error("No such edge ($(cubies[i]))")
-        e[_edge_perm(v - 1) + 1] = _edge_val(_SM_EDGE_ORDER[i], _edge_ori(v - 1) ⊻ _SM_EDGE_FLIPPED[i])
+
+    # Edge
+    e = MVector{NEDGES, Edge}(undef)
+    for i in 1:NEDGES
+        v = findfirst(==(cubies[i]), _EDGE_STRS)
+        isnothing(v) && error("invalid string for Edge: $(cubies[i])")
+        e[perm(ALL_EDGES[v])] = Edge(_SM_EDGE_ORDER[i], ori(ori_add(ALL_EDGES[v], _SM_EDGE_FLIPPED[i])))
     end
-    for i in 1:8
-        v = findfirst(==(cubies[i+12]), _SM_CORNERS)
-        isnothing(v) && error("No such corner ($(cubies[i+12]))")
-        c[_corner_perm(v - 1) + 1] = _corner_ori_sub(_SM_CORNER_ORDER[i], v - 1)
+
+    # Corner
+    c = MVector{NCORNERS, Corner}(undef)
+    for i in 1:NCORNERS
+        cstr = cubies[i+12]
+        v = findfirst(==(cstr), _CORNER_STRS)
+        isnothing(v) && error("invalid string for Corner: $cstr")
+        if !mirrored
+            (v <= NSTATES) || throw(ArgumentError("corner $cstr is inconsistent with center $(s')"))
+            c[perm(ALL_CORNERS[v])] = Corner(_SM_CORNER_ORDER[i], neg_ori(ALL_CORNERS[v]))
+        else
+            v -= NSTATES
+            (v >= 1) || throw(ArgumentError("corner $cstr is inconsistent with center $(s')"))
+            c[perm(ALL_CORNERS[v])] = Corner(_SM_CORNER_ORDER[i], ori(ALL_CORNERS[v]))
+        end
     end
-    # Verify the given cube is valid
-    return Cube(Tuple(c), Tuple(e))
+
+    return Cube(s, Tuple(e), Tuple(c))
 end
