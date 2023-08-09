@@ -8,6 +8,7 @@ using Test
     include("cube.jl")
     include("move.jl")
     include("rotate.jl")
+    include("canon.jl")
     include("print.jl")
     include("display.jl")
 end

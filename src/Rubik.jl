@@ -10,6 +10,7 @@ include("cubies.jl")
 include("cube.jl")
 include("move.jl")
 include("rotate.jl")
+include("canon.jl")
 include("literal-moves.jl")
 include("singmaster.jl")
 include("display.jl")
@@ -21,6 +22,7 @@ export Edge, Corner, perm, ori
 export Cube, singmaster, parse_singmaster
 export Move, I, @seq_str
 export rotate, normalize, is_congruent
+export canonicalize
 
 export FACE_TURNS, CUBE_ROTATIONS, SLICE_TURNS, WIDE_TURNS
 @_export_move_powers(1:3, U, F, R, D, B, L)
