@@ -15,6 +15,7 @@ include("literal-moves.jl")
 include("singmaster.jl")
 include("display.jl")
 include("random.jl")
+include("utils.jl")
 
 export Face, Up, Front, Right, Down, Back, Left, opposite, ALL_FACES
 export Symm, is_mirrored, @symm_str, ALL_SYMMS, UNMIRRORED_SYMMS, MIRRORED_SYMMS

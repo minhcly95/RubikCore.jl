@@ -11,4 +11,5 @@ using Test
     include("canon.jl")
     include("print.jl")
     include("display.jl")
+    include("search.jl")
 end
