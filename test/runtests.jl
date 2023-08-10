@@ -1,7 +1,7 @@
-using Rubik
+using RubiksCore
 using Test
 
-@testset "Rubik.jl" begin
+@testset "RubiksCore.jl" begin
     include("const.jl")
     include("face.jl")
     include("symm.jl")
