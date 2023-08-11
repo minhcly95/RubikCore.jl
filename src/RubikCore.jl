@@ -1,4 +1,4 @@
-module RubiksCore
+module RubikCore
 
 using StaticArrays
 using Random
