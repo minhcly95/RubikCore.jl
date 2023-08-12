@@ -1,5 +1,5 @@
 macro define_int_struct(struct_name, int_type, max_val, inherit=nothing)
-    trunc_val = typemax(eval(int_type))
+    trunc_val = typemax(getfield(Core, int_type))
     int_type = esc(int_type)
     max_val = esc(max_val)
     struct_str = "$struct_name"
