@@ -1,14 +1,14 @@
 struct Cube
     center::Symm
-    edges::NTuple{NEDGES, Edge}
-    corners::NTuple{NCORNERS, Corner}
+    edges::NTuple{N_EDGES, Edge}
+    corners::NTuple{N_CORNERS, Corner}
 
     Base.@propagate_inbounds function Cube(center, edges, corners)
         @boundscheck begin
             eperm = Int.(perm.(edges))
-            (sort!(collect(eperm)) == 1:NEDGES) || throw(ArgumentError("invalid edge permutation: $eperm"))
+            (sort!(collect(eperm)) == 1:N_EDGES) || throw(ArgumentError("invalid edge permutation: $eperm"))
             cperm = Int.(perm.(corners))
-            (sort!(collect(cperm)) == 1:NCORNERS) || throw(ArgumentError("invalid corner permutation: $cperm"))
+            (sort!(collect(cperm)) == 1:N_CORNERS) || throw(ArgumentError("invalid corner permutation: $cperm"))
         end
         new(center, edges, corners)
     end
@@ -18,7 +18,7 @@ Cube(c::Cube) = c
 Base.copy(c::Cube) = c
 
 # Identity cube
-const _IDENTITY_CUBE = Cube(Symm(), Tuple(Edge(i, 1) for i in 1:NEDGES), Tuple(Corner(i, 1) for i in 1:NCORNERS))
+const _IDENTITY_CUBE = Cube(Symm(), Tuple(Edge(i, 1) for i in 1:N_EDGES), Tuple(Corner(i, 1) for i in 1:N_CORNERS))
 Cube() = _IDENTITY_CUBE
 
 Base.one(::Cube) = Cube()
@@ -30,13 +30,13 @@ is_mirrored(c::Cube) = is_mirrored(c.center)
 # Multiplication
 function Base.:*(a::Cube, b::Cube)
     ds = a.center * b.center
-    de = MVector{NEDGES, Edge}(undef)
-    dc = MVector{NCORNERS, Corner}(undef)
-    for i = 1:NEDGES
+    de = MVector{N_EDGES, Edge}(undef)
+    dc = MVector{N_CORNERS, Corner}(undef)
+    for i = 1:N_EDGES
         ae = a.edges[i]
         @inbounds de[i] = ori_add(b.edges[perm(ae)], ori(ae))
     end
-    for i = 1:NCORNERS
+    for i = 1:N_CORNERS
         ac = a.corners[i]
         @inbounds dc[i] = ori_add(b.corners[perm(ac)], ori(ac))
     end
@@ -46,15 +46,15 @@ end
 # Inverse
 function Base.inv(c::Cube)
     ds = c.center'
-    de = MVector{NEDGES, Edge}(undef)
-    dc = MVector{NCORNERS, Corner}(undef)
-    for i = 1:NEDGES
+    de = MVector{N_EDGES, Edge}(undef)
+    dc = MVector{N_CORNERS, Corner}(undef)
+    for i = 1:N_EDGES
         ce = c.edges[i]
-        @inbounds de[perm(ce)] = _unsafe_edge(i, ori(ce))
+        @inbounds de[perm(ce)] = @inbounds(Edge(i, ori(ce)))
     end
-    for i = 1:NCORNERS
+    for i = 1:N_CORNERS
         cc = c.corners[i]
-        @inbounds dc[perm(cc)] = ori_sub(_unsafe_corner(i, 1), ori(cc))
+        @inbounds dc[perm(cc)] = ori_sub(@inbounds(Corner(i, 1)), ori(cc))
     end
     return @inbounds Cube(ds, Tuple(de), Tuple(dc))
 end

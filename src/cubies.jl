@@ -1,31 +1,27 @@
-const NSTATES = 24
-const NEDGES = 12
-const NCORNERS = 8
+const N_STATES = 24
+const N_EDGES = 12
+const N_CORNERS = 8
 
 # Edge
-struct Edge
-    v::UInt8
-    function Edge(v::Integer)
-        (1 <= v <= NSTATES) || throw(ArgumentError("invalid value for Edge: $v"))
-        return new(v)
-    end
-end
+@define_int_struct(Edge, UInt8, N_STATES)
 
-Base.Int(e::Edge) = Int(e.v)
-
-const ALL_EDGES = Tuple(Edge(i) for i in 1:NSTATES)
+const ALL_EDGES = Tuple(Edge(i) for i in 1:N_STATES)
 
 # Permutation (1-12) and orientation (1-2)
-Edge(perm::Integer, ori::Integer) = Edge((perm - 1) << 1 + ori)
+Base.@propagate_inbounds function Edge(perm::Integer, ori::Integer)
+    @boundscheck begin
+        (1 <= perm <= N_EDGES) || throw(ArgumentError("invalid value for perm: $perm. Must be within 1:$N_EDGES."))
+        (1 <= ori <= 2) || throw(ArgumentError("invalid value for ori: $ori. Must be within 1:2."))
+    end
+    return @inbounds Edge((perm - 1) << 1 + ori)
+end
 
-const _EDGES = Tuple(Tuple(Edge(perm, ori) for ori in 1:2) for perm in 1:NEDGES)
-const _EDGE_PERM = Tuple(fld1(UInt8(v), 0x2) for v in 1:NSTATES)
-const _EDGE_ORI = Tuple(mod1(UInt8(v), 0x2) for v in 1:NSTATES)
+const _EDGES = Tuple(Tuple(Edge(perm, ori) for ori in 1:2) for perm in 1:N_EDGES)
+const _EDGE_PERM = Tuple(fld1(UInt8(v), 0x2) for v in 1:N_STATES)
+const _EDGE_ORI = Tuple(mod1(UInt8(v), 0x2) for v in 1:N_STATES)
 
 perm(e::Edge) = @inbounds _EDGE_PERM[Int(e)]
-ori(e::Edge) = @inbounds _EDGE_ORI[Int(e)] 
-
-_unsafe_edge(perm::Integer, ori::Integer) = @inbounds _EDGES[perm][ori]
+ori(e::Edge) = @inbounds _EDGE_ORI[Int(e)]
 
 # Ori manipulation
 const _EDGE_ORI_ADD = Tuple(Tuple(Edge(perm(e), mod1(ori(e) + (o - 1), 2)) for o in 1:2) for e in ALL_EDGES)
@@ -34,31 +30,27 @@ flip(e::Edge) = @inbounds _EDGE_ORI_ADD[Int(e)][2]
 ori_add(e1::Edge, ori::Integer) = @inbounds _EDGE_ORI_ADD[Int(e1)][ori]
 
 # Corner
-struct Corner
-    v::UInt8
-    function Corner(v::Integer)
-        (1 <= v <= NSTATES) || throw(ArgumentError("invalid value for Corner: $v"))
-        return new(v)
-    end
-end
+@define_int_struct(Corner, UInt8, N_STATES)
 
-Base.Int(c::Corner) = Int(c.v)
-
-const ALL_CORNERS = Tuple(Corner(i) for i in 1:NSTATES)
+const ALL_CORNERS = Tuple(Corner(i) for i in 1:N_STATES)
 
 # Permutation (1-8) and orientation (1-3)
-Corner(perm::Integer, ori::Integer) = Corner((ori - 1) << 3 + perm)
+Base.@propagate_inbounds function Corner(perm::Integer, ori::Integer)
+    @boundscheck begin
+        (1 <= perm <= N_CORNERS) || throw(ArgumentError("invalid value for perm: $perm. Must be within 1:$N_CORNERS."))
+        (1 <= ori <= 3) || throw(ArgumentError("invalid value for ori: $ori. Must be within 1:3."))
+    end
+    return @inbounds Corner((ori - 1) << 3 + perm)
+end
 
-const _CORNERS = Tuple(Tuple(Corner(perm, ori) for ori in 1:3) for perm in 1:NCORNERS)
-const _CORNER_PERM = Tuple(mod1(UInt8(v), 0x8) for v in 1:NSTATES)
-const _CORNER_ORI = Tuple(fld1(UInt8(v), 0x8) for v in 1:NSTATES)
+const _CORNERS = Tuple(Tuple(Corner(perm, ori) for ori in 1:3) for perm in 1:N_CORNERS)
+const _CORNER_PERM = Tuple(mod1(UInt8(v), 0x8) for v in 1:N_STATES)
+const _CORNER_ORI = Tuple(fld1(UInt8(v), 0x8) for v in 1:N_STATES)
 const _CORNER_NEG_ORI = Tuple(mod1(0x5 - o, 0x3) for o in _CORNER_ORI)
 
 perm(c::Corner) = @inbounds _CORNER_PERM[Int(c)]
 ori(c::Corner) = @inbounds _CORNER_ORI[Int(c)]
 neg_ori(c::Corner) = @inbounds _CORNER_NEG_ORI[Int(c)]
-
-_unsafe_corner(perm::Integer, ori::Integer) = @inbounds _CORNERS[perm][ori]
 
 # Ori manipulation
 const _CORNER_ORI_NEG = Tuple(Corner(perm(c), mod1(5 - ori(c), 3)) for c in ALL_CORNERS)
@@ -91,3 +83,6 @@ const _CORNER_STRS = (
     "ULB", "UBR", "UFL", "URF", "DBL", "DRB", "DLF", "DFR",
     "LBU", "BRU", "FLU", "RFU", "BLD", "RBD", "LFD", "FRD",
     "BUL", "RUB", "LUF", "FUR", "LDB", "BDR", "FDL", "RDF")
+
+slot_string(e::Edge) = _EDGE_STRS[Int(e)]
+slot_string(c::Corner, mirrored=false) = _CORNER_STRS[Int(c) + (mirrored ? 24 : 0)]

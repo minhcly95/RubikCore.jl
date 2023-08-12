@@ -5,17 +5,17 @@ end
 
 function print_net(io::IO, c::Cube)
     FACE_CRAYONS = Dict(
-        'U' => crayon"fg:black bg:white",
-        'F' => crayon"fg:white bg:green",
-        'R' => crayon"fg:white bg:red",
-        'D' => crayon"fg:black bg:yellow",
-        'B' => crayon"fg:white bg:blue",
-        'L' => crayon"fg:white bg:magenta",     # Orange is replaced by magenta
+        Up => crayon"fg:black bg:white",
+        Front => crayon"fg:white bg:green",
+        Right => crayon"fg:white bg:red",
+        Down => crayon"fg:black bg:yellow",
+        Back => crayon"fg:white bg:blue",
+        Left => crayon"fg:white bg:magenta",    # Orange is replaced by magenta
         )
     DEF_CRAYON = crayon"reset"
     NBSP = Char(160)                            # Non-breaking space
 
-    print_square(f) = print(io, FACE_CRAYONS[f], "$NBSP$f$NBSP")
+    print_square(f) = print(io, FACE_CRAYONS[f], "$NBSP$(Char(f))$NBSP")
     function print_row(net_face, row)
         for i in 1:3
             print_square(net_face[(row-1)*3 + i])
@@ -24,16 +24,16 @@ function print_net(io::IO, c::Cube)
     print_emptyrow() = print(io, DEF_CRAYON, NBSP^9)
     print_newline() = println(io, DEF_CRAYON, NBSP)
 
-    net = _get_net(c)
+    cnet = net(c)
 
     for i in 1:3
-        print_emptyrow(); print_row(net[1], i); print_emptyrow(); print_emptyrow(); print_newline()
+        print_emptyrow(); print_row(cnet[1], i); print_emptyrow(); print_emptyrow(); print_newline()
     end
     for i in 1:3
-        print_row(net[6], i); print_row(net[2], i); print_row(net[3], i); print_row(net[5], i); print_newline()
+        print_row(cnet[6], i); print_row(cnet[2], i); print_row(cnet[3], i); print_row(cnet[5], i); print_newline()
     end
     for i in 1:3
-        print_emptyrow(); print_row(net[4], i); print_emptyrow(); print_emptyrow();
+        print_emptyrow(); print_row(cnet[4], i); print_emptyrow(); print_emptyrow();
         (i < 3) ? print_newline() : print(io, DEF_CRAYON, NBSP)
     end
 end
@@ -41,12 +41,16 @@ end
 macro _net_face_from_sm(sm, i1, i2, i3, i4, f, i5, i6, i7, i8)
     sm = esc(sm)
     f = esc(f)
-    return :(($sm[$i1], $sm[$i2], $sm[$i3], $sm[$i4], $f, $sm[$i5], $sm[$i6], $sm[$i7], $sm[$i8]))
+    return :((
+        Face($sm[$i1]), Face($sm[$i2]), Face($sm[$i3]),
+        Face($sm[$i4]), $f, Face($sm[$i5]),
+        Face($sm[$i6]), Face($sm[$i7]), Face($sm[$i8])
+    ))
 end
 
-function _get_net(c::Cube)
+function net(c::Cube)
     sm = singmaster(c)
-    centers = Char.(rotate(f, c.center') for f in ALL_FACES)
+    centers = [rotate(f, c.center') for f in ALL_FACES]
     sm = sm[7:end]
     return (
         @_net_face_from_sm(sm, 45, 7, 41, 10, centers[1], 4, 49, 1, 37),

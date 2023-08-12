@@ -4,6 +4,7 @@ using StaticArrays
 using Random
 using Crayons
 
+include("macros.jl")
 include("face.jl")
 include("symm.jl")
 include("cubies.jl")
@@ -17,15 +18,16 @@ include("utils.jl")
 
 export Face, Up, Front, Right, Down, Back, Left, opposite, ALL_FACES
 export Symm, is_mirrored, @symm_str, ALL_SYMMS, UNMIRRORED_SYMMS, MIRRORED_SYMMS
-export Edge, Corner, perm, ori
+export Edge, Corner, perm, ori, slot_string
 export Cube, singmaster, parse_singmaster
 export Move, @seq_str
 export rotate, normalize, is_congruent
 export canonicalize
+export net
 
 module Literals
 using ..RubikCore
-import ..RubikCore: Move, Face, ALL_EDGES, ALL_CORNERS, NFACES, NEDGES, NCORNERS, I
+import ..RubikCore: Move, Face, ALL_EDGES, ALL_CORNERS, N_FACES, N_EDGES, N_CORNERS, I
 
 include("literal-moves.jl")
 

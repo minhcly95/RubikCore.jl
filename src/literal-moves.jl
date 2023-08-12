@@ -85,7 +85,7 @@ function _make_basic_face_turns()
     edge_trans = [e for _ in ALL_FACES, e in ALL_EDGES]
     corner_trans = [c for _ in ALL_FACES, c in ALL_CORNERS]
 
-    for f in 1:NFACES
+    for f in 1:N_FACES
         for i in 1:4
             ii = mod1(i + 1, 4)
             for o in 1:2
@@ -101,9 +101,9 @@ function _make_basic_face_turns()
 
     return Tuple(
         Move(Cube(Symm(),
-            Tuple(edge_trans[f, Int(Edge(i, 1))] for i in 1:NEDGES),
-            Tuple(corner_trans[f, Int(Corner(i, 1))] for i in 1:NCORNERS)))
-        for f in 1:NFACES)
+            Tuple(edge_trans[f, Int(Edge(i, 1))] for i in 1:N_EDGES),
+            Tuple(corner_trans[f, Int(Corner(i, 1))] for i in 1:N_CORNERS)))
+        for f in 1:N_FACES)
 end
 
 const U, F, R, D, B, L = _make_basic_face_turns()

@@ -7,11 +7,11 @@ rotate(s::Symm, symm::Symm) = s * symm
 # Cubies rotation
 function _make_rotate_tables()
     edge_dict = Dict(str => ALL_EDGES[i] for (i, str) in enumerate(_EDGE_STRS))
-    corner_dict = Dict(str => ALL_CORNERS[mod1(i, NSTATES)] for (i, str) in enumerate(_CORNER_STRS))
-    rotate_edge = Matrix{Edge}(undef, NSYMMS, NSTATES)
-    rotate_corner = Matrix{Corner}(undef, NSYMMS, NSTATES)
+    corner_dict = Dict(str => ALL_CORNERS[mod1(i, N_STATES)] for (i, str) in enumerate(_CORNER_STRS))
+    rotate_edge = Matrix{Edge}(undef, N_SYMMS, N_STATES)
+    rotate_corner = Matrix{Corner}(undef, N_SYMMS, N_STATES)
     for s in ALL_SYMMS
-        for v in 1:NSTATES
+        for v in 1:N_STATES
             # Edge
             faces = rotate.(Face.(collect(_EDGE_STRS[v])), (s,))
             rotate_edge[Int(s), v] = edge_dict[join(Char.(faces))]

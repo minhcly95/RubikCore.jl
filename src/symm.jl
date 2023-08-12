@@ -1,23 +1,14 @@
-const NSYMMS = 48
+const N_SYMMS = 48
 
 # Struct
-struct Symm
-    s::UInt8
-    function Symm(s::Integer)
-        (1 <= s <= NSYMMS) || throw(ArgumentError("invalid value for Symm: $s"))
-        return new(s)
-    end
-end
+@define_int_struct(Symm, UInt8, N_SYMMS)
 
-const ALL_SYMMS = Tuple(Symm(i) for i in 1:NSYMMS)
+Symm() = @inbounds Symm(1)
 
-Symm() = @inbounds ALL_SYMMS[1]
-Base.copy(s::Symm) = s
-
-Base.Int(s::Symm) = Int(s.s)
+const ALL_SYMMS = Tuple(@inbounds Symm(i) for i in 1:N_SYMMS)
 
 # Mirrored
-is_mirrored(s::Symm) = iseven(mod1(s.s, 8)) ⊻ iseven(fld1(s.s, 8))
+is_mirrored(s::Symm) = iseven(mod1(Int(s), 8)) ⊻ iseven(fld1(Int(s), 8))
 const UNMIRRORED_SYMMS = Tuple(filter(!is_mirrored, ALL_SYMMS))
 const MIRRORED_SYMMS = Tuple(filter(is_mirrored, ALL_SYMMS))
 
@@ -26,10 +17,10 @@ const _SYMM_PERMUTE_MAP = ("UFR", "URF", "FRU", "FUR", "RUF", "RFU")
 const _SYMM_NEGATE_MAP = ("UFR", "UFL", "UBL", "UBR", "DBR", "DBL", "DFL", "DFR")
 
 _symm_face_from_str(str::String) = tuple(Face.(collect(str))..., opposite.(Face.(collect(str)))...)
-_symm_face_mul(a, b) = Tuple(b[Int(a[i])] for i in 1:NFACES)
+_symm_face_mul(a, b) = Tuple(b[Int(a[i])] for i in 1:N_FACES)
 
 function _make_symm_face()
-    symm_face = Vector(undef, NSYMMS)
+    symm_face = Vector(undef, N_SYMMS)
     for i in 1:6
         symm_face[8*(i-1) + 1] = _symm_face_from_str(_SYMM_PERMUTE_MAP[i])
     end

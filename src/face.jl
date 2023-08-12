@@ -1,15 +1,7 @@
-const NFACES = 6
+const N_FACES = 6
 
 # Struct
-struct Face
-    f::UInt8
-    function Face(f::Integer)
-        (1 <= f <= NFACES) || throw(ArgumentError("invalid value for Face: $f"))
-        return new(f)
-    end
-end
-
-Base.Int(f::Face) = Int(f.f)
+@define_int_struct(Face, UInt8, N_FACES)
 
 # Literal faces
 const Up = Face(1)

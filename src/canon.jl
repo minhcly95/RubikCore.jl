@@ -20,16 +20,16 @@ end
 
 # Implementation
 @inline function _canonicalize(cube::Cube, init::Cube)
-    de = MVector{NEDGES, Edge}(init.edges)
-    dc = MVector{NCORNERS, Corner}(init.corners)
+    de = MVector{N_EDGES, Edge}(init.edges)
+    dc = MVector{N_CORNERS, Corner}(init.corners)
     # Rotate and multiply from scratch to prune as early as possible
     # No need to rotate the center because it's unchanged
     for symm in ALL_SYMMS[2:end]
         inv_symm = symm'
         less, greater = false, false
 
-        for i in 1:NEDGES
-            e1 = rotate(_unsafe_edge(i, 1), inv_symm)
+        for i in 1:N_EDGES
+            e1 = rotate(@inbounds(Edge(i, 1)), inv_symm)
             e2 = ori_add(cube.edges[perm(e1)], ori(e1))
             e = rotate(e2, symm)
             if less || e < de[i]
@@ -42,8 +42,8 @@ end
         end
         greater && continue
 
-        for i in 1:NCORNERS
-            c1 = rotate(_unsafe_corner(i, 1), inv_symm)
+        for i in 1:N_CORNERS
+            c1 = rotate(@inbounds(Corner(i, 1)), inv_symm)
             c2 = ori_add(cube.corners[perm(c1)], ori(c1))
             c = rotate(c2, symm)
             if less || c < dc[i]
