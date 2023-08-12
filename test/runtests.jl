@@ -1,4 +1,5 @@
-using RubikCore
+using RubikCore, RubikCore.Literals
+using RubikCore: I
 using Test
 
 @testset "RubikCore.jl" begin

@@ -161,12 +161,3 @@ function Base.parse(::Type{Move}, str::AbstractString)
         throw(ArgumentError("unknown move: $str"))
     end
 end
-
-Move(str::AbstractString) = parse(Move, str)
-
-# Parse sequence
-Base.parse(::Type{Vector{Move}}, str::AbstractString) = parse.(Move, split(str))
-
-macro seq_str(str)
-    return :(parse(Vector{Move}, $(esc(str))))
-end
