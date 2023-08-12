@@ -51,7 +51,7 @@
         for _ in 1:100
             seq1 = rand(Move, 50)
             seq2 = rand(Move, 50)
-            seq3 = vcat(seq1, seq2)
+            seq3 = seq1 * seq2
             a, b, c = prod.((seq1, seq2, seq3))
             @test a * b == c
         end
@@ -60,8 +60,7 @@
     @testset "Sequence inverse" begin
         for _ in 1:100
             seq = rand(Move, 50)
-            inv_seq = reverse!(inv.(seq))
-            a, b = prod.((seq, inv_seq))
+            a, b = prod.((seq, seq'))
             @test a == b'
         end
     end
@@ -69,11 +68,7 @@
     @testset "Sequence power" begin
         for _ in 1:100
             seq = rand(Move, 50)
-            seq2 = vcat(seq, seq)
-            seq3 = vcat(seq, seq2)
-            seq5 = vcat(seq2, seq3)
-            seq8 = vcat(seq3, seq5)
-            c, c2, c3, c5, c8 = prod.((seq, seq2, seq3, seq5, seq8))
+            c, c2, c3, c5, c8 = prod.((seq, seq^2, seq^3, seq^5, seq^8))
             @test c^0 == I
             @test c^1 == c
             @test c^-1 == c'

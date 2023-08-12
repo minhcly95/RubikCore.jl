@@ -3,8 +3,8 @@ function search_recur(cube, d, all_pos, last_face)
     (d == 0) && return
     faces = isnothing(last_face) ? ALL_FACES : RubikCore.canonseq_next_faces(last_face)
     for f in faces, t in 1:3
-        move = FACE_TURNS[(Int(f)-1) * 3 + t]
-        search_recur(cube * move, d - 1, all_pos, f)
+        ft = FaceTurn(f, t)
+        search_recur(cube * ft, d - 1, all_pos, f)
     end
 end
 

@@ -8,6 +8,7 @@ using Test
     include("symm.jl")
     include("cube.jl")
     include("move.jl")
+    include("faceturn.jl")
     include("rotate.jl")
     include("canon.jl")
     include("print.jl")

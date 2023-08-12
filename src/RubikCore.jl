@@ -4,6 +4,7 @@ using StaticArrays
 using Random
 using Crayons
 
+# Pre Literals definitions
 include("macros.jl")
 include("face.jl")
 include("symm.jl")
@@ -16,6 +17,7 @@ include("singmaster.jl")
 include("display.jl")
 include("utils.jl")
 
+export AbstractMove
 export Face, Up, Front, Right, Down, Back, Left, opposite, ALL_FACES
 export Symm, is_mirrored, @symm_str, ALL_SYMMS, UNMIRRORED_SYMMS, MIRRORED_SYMMS
 export Edge, Corner, perm, ori, slot_string
@@ -25,6 +27,7 @@ export rotate, normalize, is_congruent
 export canonicalize
 export net
 
+# Literals submodule
 module Literals
 using ..RubikCore
 import ..RubikCore: Move, Face, ALL_EDGES, ALL_CORNERS, N_FACES, N_EDGES, N_CORNERS, I
@@ -39,8 +42,10 @@ export FACE_TURNS, CUBE_ROTATIONS, SLICE_TURNS, WIDE_TURNS
 
 end
 
-using .Literals: FACE_TURNS
-
+# Post Literals definitions
+include("faceturn.jl")
 include("random.jl")
+
+export FaceTurn, twist, ALL_FACETURNS
 
 end

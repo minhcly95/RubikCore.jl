@@ -110,16 +110,6 @@ const U, F, R, D, B, L = _make_basic_face_turns()
 @_define_move_powers(1:3, U, F, R, D, B, L)
 @_group_move_powers(FACE_TURNS, 1:3, U, F, R, D, B, L)
 
-# Face to move
-function Move(f::Face, t::Integer = 1)
-    t = mod(t, 4)
-    return t == 0 ? I : FACE_TURNS[(Int(f)-1) * 3 + t]
-end
-
-# Move to face
-const _MOVE_TO_FACE = Dict(Move(f, t) => f for f in ALL_FACES, t in 1:3)
-Face(m::Move) = _MOVE_TO_FACE[m]
-
 # Whole cube rotations
 const x, y, z = Move(rotate(Cube(), symm"BUR")), Move(rotate(Cube(), symm"ULF")), Move(rotate(Cube(), symm"RFD"))
 @_define_move_powers(1:3, x, y, z)

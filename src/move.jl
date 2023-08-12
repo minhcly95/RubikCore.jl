@@ -1,4 +1,6 @@
-struct Move
+abstract type AbstractMove end
+
+struct Move <: AbstractMove
     cube::Cube
 end
 
@@ -13,26 +15,36 @@ const I = Move()
 Base.one(::Move) = I
 Base.one(::Type{Move}) = I
 
-# Comparison with Cube
-Base.:(==)(a::Move, b::Cube) = Cube(a) == b
-Base.:(==)(a::Cube, b::Move) = a == Cube(b)
+# Operations (abstract form)
+Cube(m::AbstractMove) = Cube(Move(m))
 
-# Operations
-Base.:*(a::Cube, b::Move) = a * Cube(b)
-Base.:*(a::Move, b::Cube) = Cube(a) * b
-Base.:*(a::Move, b::Move) = Move(Cube(a) * Cube(b))
-Base.inv(m::Move) = Move(inv(Cube(m)))
-Base.adjoint(m::Move) = inv(m)
-Base.literal_pow(::typeof(^), m::Move, p::Val) = Move(Base.literal_pow(^, Cube(m), p))
+Base.:(==)(a::Cube, b::AbstractMove) = a == Cube(b)
+Base.:(==)(a::AbstractMove, b::Cube) = Cube(a) == b
+Base.:(==)(a::AbstractMove, b::AbstractMove) = Cube(a) == Cube(b)
+
+Base.:*(a::Cube, b::AbstractMove) = a * Cube(b)
+Base.:*(a::AbstractMove, b::Cube) = Cube(a) * b
+Base.:*(a::AbstractMove, b::AbstractMove) = Move(Cube(a) * Cube(b))
+
+Base.inv(m::AbstractMove) = Move(inv(Cube(m)))
+Base.adjoint(m::AbstractMove) = inv(m)
+
+Base.:^(m::AbstractMove, p::Integer) = Move(Cube(m)^p)
 
 # Sequence of moves
-Move(ms::AbstractVector{Move}) = prod(ms)
-Cube(ms::AbstractVector{Move}) = Cube(prod(ms))
-Base.:*(c::Cube, ms::AbstractVector{Move}) = prod(ms, init=c)
-Base.:*(ms::AbstractVector{Move}, c::Cube) = prod(ms) * c
-Base.inv(ms::AbstractVector{Move}) = reverse!(inv.(ms))
-Base.adjoint(ms::AbstractVector{Move}) = inv(ms)
-Base.:^(ms::AbstractVector{Move}, p::Integer) = repeat(ms, outer=p)
+Move(ms::AbstractVector{<:AbstractMove}) = prod(ms)
+Cube(ms::AbstractVector{<:AbstractMove}) = Cube(prod(ms))
+
+Base.:*(c::Cube, ms::AbstractVector{<:AbstractMove}) = prod(ms, init=c)
+Base.:*(ms::AbstractVector{<:AbstractMove}, c::Cube) = prod(ms) * c
+Base.:*(a::AbstractVector{<:AbstractMove}, b::AbstractVector{<:AbstractMove}) = vcat(a, b)
+Base.:*(a::AbstractMove, b::AbstractVector{<:AbstractMove}) = vcat(a, b)
+Base.:*(a::AbstractVector{<:AbstractMove}, b::AbstractMove) = vcat(a, b)
+
+Base.inv(ms::AbstractVector{<:AbstractMove}) = reverse!(inv.(ms))
+Base.adjoint(ms::AbstractVector{<:AbstractMove}) = inv(ms)
+
+Base.:^(ms::AbstractVector{<:AbstractMove}, p::Integer) = repeat(ms, outer=p)
 
 # Parse (implemented in literal-moves.jl)
 Move(str::AbstractString) = parse(Move, str)
