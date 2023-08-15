@@ -17,4 +17,10 @@
             @test ft^p == Move(ft)^p
         end
     end
+
+    @testset "Rotation" begin
+        for ft in ALL_FACETURNS, symm in ALL_SYMMS
+            @test rotate(ft, symm) == rotate(Move(ft), symm)
+        end
+    end
 end

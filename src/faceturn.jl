@@ -40,6 +40,10 @@ function Base.:^(ft::FaceTurn, p::Integer)
     return t == 0 ? I : @inbounds FaceTurn(Face(ft), t)
 end
 
+# Cache FaceTurn rotation
+const _FACETURN_ROTATE = Tuple(Tuple(FaceTurn(rotate(Move(ft), symm)) for ft in ALL_FACETURNS) for symm in ALL_SYMMS)
+rotate(ft::FaceTurn, symm::Symm) = @inbounds _FACETURN_ROTATE[Int(symm)][Int(ft)]
+
 # Print
 Base.print(io::IO, ft::FaceTurn) = print(io, Move(ft))
 Base.show(io::IO, ft::FaceTurn) = print(io, "FaceTurn($(Move(ft)))")
