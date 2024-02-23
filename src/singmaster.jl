@@ -1,57 +1,72 @@
-const _SM_SOLVED = "UF UR UB UL DF DR DB DL FR FL BR BL UFR URB UBL ULF DRF DFL DLB DBR"
+const SM_SOLVED = "UF UR UB UL DF DR DB DL FR FL BR BL UFR URB UBL ULF DRF DFL DLB DBR"
 
-const _SM_EDGE_ORDER = Tuple(perm(ALL_EDGES[findfirst(==(str), _EDGE_STRS)]) for str in split(_SM_SOLVED)[1:12])
-const _SM_EDGE_FLIPPED = Tuple(ori(ALL_EDGES[findfirst(==(str), _EDGE_STRS)]) for str in split(_SM_SOLVED)[1:12])
-const _SM_CORNER_ORDER = Tuple(perm(ALL_CORNERS[findfirst(==(str), _CORNER_STRS)]) for str in split(_SM_SOLVED)[13:end])
+# SM string position → slot mapping
+const SM_EDGE_SLOTS = SPerm{EDGE_DEGREE,UInt8}(1, 2, 3, 4, 5, 6, 7, 8, 17, 18, 19, 20, 21, 22, 23, 24, 9, 10, 16, 15, 12, 11, 13, 14)
+const SM_CORNER_SLOTS = SPerm{CORNER_DEGREE,UInt8}(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 22, 23, 24, 19, 20, 21, 16, 17, 18)
 
-function singmaster(c::Cube)
-    d = inv(c)
-    sstr = string(d.center)
-    estr = [_EDGE_STRS[Int(ori_add(d.edges[_SM_EDGE_ORDER[i]], _SM_EDGE_FLIPPED[i]))] for i in 1:N_EDGES]
-    if !is_mirrored(c)
-        cstr = [_CORNER_STRS[Int(d.corners[_SM_CORNER_ORDER[i]])] for i in 1:N_CORNERS]
-    else
-        cstr = [_CORNER_STRS[Int(ori_neg(d.corners[_SM_CORNER_ORDER[i]])) + N_STATES] for i in 1:N_CORNERS]
+# Token → side mapping
+function _make_singmaster_token_dicts()
+    edges = []
+    for i in 1:N_EDGES
+        j, k = 2i - 1, 2i
+        fj, fk = Char(EDGE_FACE[j]), Char(EDGE_FACE[k])
+        push!(edges, join((fj, fk)) => (j, k))
+        push!(edges, join((fk, fj)) => (k, j))
     end
-    return "[$sstr] " * join(vcat(estr, cstr), " ")
+
+    corners = []
+    for i in 1:N_CORNERS
+        j, k, l = 3i - 2, 3i - 1, 3i
+        fj, fk, fl = Char(CORNER_FACE[j]), Char(CORNER_FACE[k]), Char(CORNER_FACE[l])
+        push!(corners, join((fj, fk, fl)) => (j, k, l))
+        push!(corners, join((fj, fl, fk)) => (j, l, k))
+        push!(corners, join((fk, fl, fj)) => (k, l, j))
+        push!(corners, join((fk, fj, fl)) => (k, j, l))
+        push!(corners, join((fl, fj, fk)) => (l, j, k))
+        push!(corners, join((fl, fk, fj)) => (l, k, j))
+    end
+
+    return Dict(edges), Dict(corners)
+end
+const SM_TOKEN_TO_EDGE, SM_TOKEN_TO_CORNER = _make_singmaster_token_dicts()
+
+# Singmaster string
+function singmaster(c::Cube)
+    # By convention, the input c is in the side → slot format
+    # For printing, we use the slot → side format
+    d = inv(c)
+
+    sstr = string(d.center)
+
+    # SM position → slot → side
+    echars = Char.(EDGE_FACE[SM_EDGE_SLOTS*d.edges.perm])
+    cchars = Char.(CORNER_FACE[SM_CORNER_SLOTS*d.corners.perm])
+
+    etokens = join.(Iterators.partition(echars, 2))
+    ctokens = join.(Iterators.partition(cchars, 3))
+
+    return "[$sstr] " * join(vcat(etokens, ctokens), " ")
 end
 
+# Parse Singmaster string
 function parse_singmaster(str::AbstractString)
     cubies = split(str)
 
     # Center
     s = Symm()
-    mirrored = false
     if first(cubies[1]) == '['
         s = Symm(popfirst!(cubies)[2:end-1])'
-        mirrored = is_mirrored(s)
     end
 
-    length(cubies) == 20 || error("Singmaster's notation must have exactly 20 cubies")
+    length(cubies) == N_EDGES + N_CORNERS || error("Singmaster's notation must have exactly 20 tokens")
 
-    # Edge
-    e = MVector{N_EDGES, Edge}(undef)
-    for i in 1:N_EDGES
-        v = findfirst(==(cubies[i]), _EDGE_STRS)
-        isnothing(v) && error("invalid string for Edge: $(cubies[i])")
-        e[perm(ALL_EDGES[v])] = Edge(_SM_EDGE_ORDER[i], ori(ori_add(ALL_EDGES[v], _SM_EDGE_FLIPPED[i])))
-    end
+    # SM position → side
+    edge_sides = SPerm(Tuple(Iterators.flatten(SM_TOKEN_TO_EDGE[token] for token in cubies[1:N_EDGES])))
+    corner_sides = SPerm(Tuple(Iterators.flatten(SM_TOKEN_TO_CORNER[token] for token in cubies[N_EDGES+1:N_EDGES+N_CORNERS])))
 
-    # Corner
-    c = MVector{N_CORNERS, Corner}(undef)
-    for i in 1:N_CORNERS
-        cstr = cubies[i+12]
-        v = findfirst(==(cstr), _CORNER_STRS)
-        isnothing(v) && error("invalid string for Corner: $cstr")
-        if !mirrored
-            (v <= N_STATES) || throw(ArgumentError("corner $cstr is inconsistent with center $(s')"))
-            c[perm(ALL_CORNERS[v])] = Corner(_SM_CORNER_ORDER[i], neg_ori(ALL_CORNERS[v]))
-        else
-            v -= N_STATES
-            (v >= 1) || throw(ArgumentError("corner $cstr is inconsistent with center $(s')"))
-            c[perm(ALL_CORNERS[v])] = Corner(_SM_CORNER_ORDER[i], ori(ALL_CORNERS[v]))
-        end
-    end
+    # Side → SM position → slot
+    estate = EdgeState(inv(edge_sides) * SM_EDGE_SLOTS)
+    cstate = CornerState(inv(corner_sides) * SM_CORNER_SLOTS)
 
-    return Cube(s, Tuple(e), Tuple(c))
+    return Cube(s, estate, cstate)
 end

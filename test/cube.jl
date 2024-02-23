@@ -78,4 +78,15 @@
             @test c^8 == c8
         end
     end
+
+    @testset "Sequence validity" begin
+        for _ in 1:100
+            c = rand(Cube)
+            seq = rand(Move, 50)
+            d = c * seq
+            @test isvalid(c)
+            @test isvalid(c')
+            @test isvalid(d)
+        end
+    end
 end

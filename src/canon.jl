@@ -1,14 +1,22 @@
 # Define an order
-Base.isless(a::Symm, b::Symm) = Int(a) < Int(b)
-Base.isless(a::Edge, b::Edge) = Int(a) < Int(b)
-Base.isless(a::Corner, b::Corner) = Int(a) < Int(b)
+function Base.isless(a::EdgeState, b::EdgeState)
+    aa, bb = Ref(a), Ref(b)
+    GC.@preserve aa bb return Base.memcmp(pointer_from_objref(aa), pointer_from_objref(bb), sizeof(EdgeState)) < 0
+end
 
-Base.isless(a::Cube, b::Cube) =
-    a.center < b.center || a.center == b.center &&
-    (a.edges < b.edges || a.edges == b.edges && a.corners < b.corners)
+function Base.isless(a::CornerState, b::CornerState)
+    aa, bb = Ref(a), Ref(b)
+    GC.@preserve aa bb return Base.memcmp(pointer_from_objref(aa), pointer_from_objref(bb), sizeof(CornerState)) < 0
+end
 
-# Find the minimum cube across all symmetries (and inverse with all of its symmetries)
-function canonicalize(cube::Cube, include_inv::Bool=false)
+function Base.isless(a::Cube, b::Cube)
+    aa, bb = Ref(a), Ref(b)
+    GC.@preserve aa bb return Base.memcmp(pointer_from_objref(aa), pointer_from_objref(bb), sizeof(Cube)) < 0
+end
+
+# Find the minimum cube across all conjugates s' * c * s for s in ALL_SYMMS
+# (and inverse with all of its conjugates)
+function canonicalize(cube::Cube; include_inv::Bool=false)
     cube = normalize(cube)
     if !include_inv
         return _canonicalize(cube, cube)
@@ -19,40 +27,23 @@ function canonicalize(cube::Cube, include_inv::Bool=false)
 end
 
 # Implementation
-@inline function _canonicalize(cube::Cube, init::Cube)
-    de = MVector{N_EDGES, Edge}(init.edges)
-    dc = MVector{N_CORNERS, Corner}(init.corners)
-    # Rotate and multiply from scratch to prune as early as possible
+function _canonicalize(cube::Cube, init::Cube)
+    edges = init.edges
+    corners = init.corners
+
     # No need to rotate the center because it's unchanged
     for symm in ALL_SYMMS[2:end]
-        inv_symm = symm'
-        less, greater = false, false
-
-        for i in 1:N_EDGES
-            e1 = rotate(@inbounds(Edge(i, 1)), inv_symm)
-            e2 = ori_add(cube.edges[perm(e1)], ori(e1))
-            e = rotate(e2, symm)
-            if less || e < de[i]
-                de[i] = e
-                less = true
-            elseif e > de[i]
-                greater = true
-                break
-            end
-        end
-        greater && continue
-
-        for i in 1:N_CORNERS
-            c1 = rotate(@inbounds(Corner(i, 1)), inv_symm)
-            c2 = ori_add(cube.corners[perm(c1)], ori(c1))
-            c = rotate(c2, symm)
-            if less || c < dc[i]
-                dc[i] = c
-                less = true
-            elseif c > dc[i]
-                break
+        sedges = symm' * cube.edges * symm
+        if sedges < edges
+            edges = sedges
+            corners = symm' * cube.corners * symm
+        elseif sedges == edges
+            scorners = symm' * cube.corners * symm
+            if scorners < corners
+                corners = scorners
             end
         end
     end
-    return @inbounds Cube(init.center, Tuple(de), Tuple(dc))
+
+    return Cube(init.center, edges, corners)
 end

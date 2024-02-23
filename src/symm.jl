@@ -1,61 +1,70 @@
 const N_SYMMS = 48
 
 # Struct
-@define_int_struct(Symm, UInt8, N_SYMMS)
+@int_struct struct Symm
+    N_SYMMS::UInt8
+end
 
 Symm() = @inbounds Symm(1)
+Base.one(::Type{Symm}) = Symm()
+Base.one(::Symm) = Symm()
 
-const ALL_SYMMS = Tuple(@inbounds Symm(i) for i in 1:N_SYMMS)
+const ALL_SYMMS = Tuple(instances(Symm))
 
-# Mirrored
-is_mirrored(s::Symm) = iseven(mod1(Int(s), 8)) ⊻ iseven(fld1(Int(s), 8))
-const UNMIRRORED_SYMMS = Tuple(filter(!is_mirrored, ALL_SYMMS))
-const MIRRORED_SYMMS = Tuple(filter(is_mirrored, ALL_SYMMS))
+# Parity
+Base.isodd(s::Symm) = iseven(mod1(Int(s), 8)) ⊻ iseven(fld1(Int(s), 8))
+Base.iseven(s::Symm) = !isodd(s)
 
-# Face mapping
-const _SYMM_PERMUTE_MAP = ("UFR", "URF", "FRU", "FUR", "RUF", "RFU")
-const _SYMM_NEGATE_MAP = ("UFR", "UFL", "UBL", "UBR", "DBR", "DBL", "DFL", "DFR")
+const EVEN_SYMMS = Tuple(filter(iseven, ALL_SYMMS))
+const ODD_SYMMS = Tuple(filter(isodd, ALL_SYMMS))
 
-_symm_face_from_str(str::String) = tuple(Face.(collect(str))..., opposite.(Face.(collect(str)))...)
-_symm_face_mul(a, b) = Tuple(b[Int(a[i])] for i in 1:N_FACES)
+# Represent Symm as permutation of faces
+const SYMM_PERMUTE_GEN = (
+    SPerm(1, 2, 3, 4, 5, 6),     # UFR
+    SPerm(1, 3, 2, 4, 6, 5),     # URF
+    SPerm(2, 3, 1, 5, 6, 4),     # FRU
+    SPerm(2, 1, 3, 5, 4, 6),     # FUR
+    SPerm(3, 1, 2, 6, 4, 5),     # RUF
+    SPerm(3, 2, 1, 6, 5, 4),     # RFU
+)
+const SYMM_NEGATE_GEN = (
+    SPerm(1, 2, 3, 4, 5, 6),     # UFR
+    SPerm(1, 2, 6, 4, 5, 3),     # UFL
+    SPerm(1, 5, 6, 4, 2, 3),     # UBL
+    SPerm(1, 5, 3, 4, 2, 6),     # UBR
+    SPerm(4, 5, 3, 1, 2, 6),     # DBR
+    SPerm(4, 5, 6, 1, 2, 3),     # DBL
+    SPerm(4, 2, 6, 1, 5, 3),     # DFL
+    SPerm(4, 2, 3, 1, 5, 6),     # DFR
+)
 
-function _make_symm_face()
-    symm_face = Vector(undef, N_SYMMS)
-    for i in 1:6
-        symm_face[8*(i-1) + 1] = _symm_face_from_str(_SYMM_PERMUTE_MAP[i])
-    end
-    for i in 1:8
-        symm_face[i] = _symm_face_from_str(_SYMM_NEGATE_MAP[i])
-    end
-    for i in 2:6, j in 2:8
-        symm_face[8*(i-1) + j] = _symm_face_mul(symm_face[8*(i-1) + 1], symm_face[j])
-    end
-    return Tuple(symm_face)
-end
-const _SYMM_FACE = _make_symm_face()
-const _SYMM_STR = Tuple(join(Char.(symm_face[1:3])) for symm_face in _SYMM_FACE)
+const SYMM_PERM = Tuple(a * b for b in SYMM_NEGATE_GEN, a in SYMM_PERMUTE_GEN)
 
-# Operations
-function _make_symm_mul()
-    symm_map = Dict(reverse.(enumerate(_SYMM_FACE)))
-    symm_mul = [Symm(symm_map[_symm_face_mul(s, n)]) for s in _SYMM_FACE, n in _SYMM_FACE]
-    return Tuple(Tuple.(eachrow(symm_mul)))
-end
-const _SYMM_MUL = _make_symm_mul()
-const _SYMM_INV = Tuple(Symm(findfirst(==(Symm()), mul_i)) for mul_i in _SYMM_MUL)
+FastPerms.SPerm(s::Symm) = @inbounds SYMM_PERM[s]
+Symm(a::SPerm) = Symm(findfirst(==(a), SYMM_PERM))
 
-Base.:*(a::Symm, b::Symm) = @inbounds _SYMM_MUL[Int(a)][Int(b)]
-Base.inv(s::Symm) = @inbounds _SYMM_INV[Int(s)]
+# Get the image of the given face
+const SYMM_FACE = Tuple(Tuple(Face.(a)) for a in SYMM_PERM)
+
+(s::Symm)(f::Face) = @inbounds SYMM_FACE[s][f]
+
+# Multiplication and inversion
+const SYMM_MUL = make_tuple([Symm(a * b) for a in SYMM_PERM, b in SYMM_PERM])
+const SYMM_INV = Tuple(Symm(findfirst(==(Symm()), mul_i)) for mul_i in SYMM_MUL)
+
+Base.:*(a::Symm, b::Symm) = @inbounds SYMM_MUL[a][b]
+Base.inv(s::Symm) = @inbounds SYMM_INV[s]
 Base.adjoint(s::Symm) = inv(s)
 Base.:^(s::Symm, p::Integer) = Base.power_by_squaring(s, p)
 
 # Print and parse
-Base.print(io::IO, s::Symm) = print(io, @inbounds _SYMM_STR[Int(s)])
+const SYMM_STR = Tuple(join(Char.(symm_face[1:3])) for symm_face in SYMM_FACE)
 
+Base.print(io::IO, s::Symm) = print(io, @inbounds SYMM_STR[s])
 Base.show(io::IO, s::Symm) = print(io, "Symm(\"$s\")")
 
 function Symm(str::AbstractString)
-    s = findfirst(==(str), _SYMM_STR)
+    s = findfirst(==(str), SYMM_STR)
     isnothing(s) && error("invalid string for Symm: $str")
     return Symm(s)
 end
@@ -63,5 +72,5 @@ end
 Base.parse(::Type{Symm}, str::AbstractString) = Symm(str)
 
 macro symm_str(str)
-    return :(Symm($(esc(str))))
+    return :(Symm($str))
 end

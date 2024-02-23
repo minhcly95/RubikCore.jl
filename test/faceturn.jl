@@ -20,7 +20,7 @@
 
     @testset "Rotation" begin
         for ft in ALL_FACETURNS, symm in ALL_SYMMS
-            @test rotate(ft, symm) == rotate(Move(ft), symm)
+            @test symm(ft) == symm(Move(ft))
         end
     end
 end

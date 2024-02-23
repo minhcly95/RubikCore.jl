@@ -1,45 +1,41 @@
-# Face rotation
-rotate(f::Face, symm::Symm) = @inbounds _SYMM_FACE[Int(symm)][Int(f)]
+# EdgeState and CornerState rotation
+function _make_symm_states()
+    # Each Symm permutes EdgeState and CornerState in a certain way.
+    # We reuse Singmaster print and parse to build these lists of permutations.
+    symm_edgestate = []
+    symm_cornerstate = []
 
-# Symm rotation
-rotate(s::Symm, symm::Symm) = s * symm
-
-# Cubies rotation
-function _make_rotate_tables()
-    edge_dict = Dict(str => ALL_EDGES[i] for (i, str) in enumerate(_EDGE_STRS))
-    corner_dict = Dict(str => ALL_CORNERS[mod1(i, N_STATES)] for (i, str) in enumerate(_CORNER_STRS))
-    rotate_edge = Matrix{Edge}(undef, N_SYMMS, N_STATES)
-    rotate_corner = Matrix{Corner}(undef, N_SYMMS, N_STATES)
-    for s in ALL_SYMMS
-        for v in 1:N_STATES
-            # Edge
-            faces = rotate.(Face.(collect(_EDGE_STRS[v])), (s,))
-            rotate_edge[Int(s), v] = edge_dict[join(Char.(faces))]
-            # Corner
-            faces = rotate.(Face.(collect(_CORNER_STRS[v])), (s,))
-            rotate_corner[Int(s), v] = corner_dict[join(Char.(faces))]
-        end
+    for symm in ALL_SYMMS
+        face_map = [Char(symm(f)) => Char(f) for f in ALL_FACES]
+        cstr = replace(SM_SOLVED, face_map...)
+        c = parse(Cube, cstr)
+        push!(symm_edgestate, c.edges)
+        push!(symm_cornerstate, c.corners)
     end
-    return Tuple(Tuple.(eachrow(rotate_edge))), Tuple(Tuple.(eachrow(rotate_corner)))
-end
-const _ROTATE_EDGE, _ROTATE_CORNER = _make_rotate_tables()
 
-rotate(e::Edge, symm::Symm) = @inbounds _ROTATE_EDGE[Int(symm)][Int(e)]
-rotate(c::Corner, symm::Symm) = @inbounds _ROTATE_CORNER[Int(symm)][Int(c)]
+    return symm_edgestate, symm_cornerstate
+end
+const SYMM_EDGESTATE, SYMM_CORNERSTATE = Tuple.(_make_symm_states())
+
+Base.:*(e::EdgeState, symm::Symm) = @inbounds e * SYMM_EDGESTATE[symm]
+Base.:*(symm::Symm, e::EdgeState) = @inbounds SYMM_EDGESTATE[symm] * e
+(symm::Symm)(e::EdgeState) = e * symm
+
+Base.:*(c::CornerState, symm::Symm) = @inbounds c * SYMM_CORNERSTATE[symm]
+Base.:*(symm::Symm, c::CornerState) = @inbounds SYMM_CORNERSTATE[symm] * c
+(symm::Symm)(c::CornerState) = c * symm
 
 # Cube rotation
-function rotate(c::Cube, symm::Symm)
-    ds = rotate(c.center, symm)
-    de = rotate.(c.edges, (symm,))
-    dc = rotate.(c.corners, (symm,))
-    return @inbounds Cube(ds, de, dc)
-end
+Base.:*(c::Cube, symm::Symm) = Cube(c.center * symm, c.edges * symm, c.corners * symm)
+Base.:*(symm::Symm, c::Cube) = Cube(symm * c.center, symm * c.edges, symm * c.corners)
+(symm::Symm)(c::Cube) = c * symm
 
 # Move rotation
-rotate(m::Move, symm::Symm) = Move(rotate(rotate(Cube(), symm') * m, symm))
+(symm::Symm)(m::Move) = Move(symm' * Cube(m) * symm)
 
 # Normalization: turn the cube back to [UFR]
-normalize(c::Cube) = rotate(c, c.center')
+normalize(c::Cube) = c * c.center'
 
 # Congruence (same cube up to symmetry)
-is_congruent(a::Cube, b::Cube) = a == rotate(b, b.center' * a.center)
+is_congruent(a::Cube, b::Cube) = a == b * (b.center' * a.center)
+

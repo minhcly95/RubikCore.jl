@@ -1,12 +1,14 @@
 abstract type AbstractMove end
 
+using Base: literal_pow
+# Move is a context-wrapper of Cube
 struct Move <: AbstractMove
     cube::Cube
 end
 
-Base.copy(m::Move) = m
 Move(m::Move) = m
 Cube(m::Move) = m.cube
+Base.copy(m::Move) = m
 
 # Identity move
 Move() = Move(Cube())
@@ -30,6 +32,7 @@ Base.inv(m::AbstractMove) = Move(inv(Cube(m)))
 Base.adjoint(m::AbstractMove) = inv(m)
 
 Base.:^(m::AbstractMove, p::Integer) = Move(Cube(m)^p)
+Base.literal_pow(::typeof(^), m::AbstractMove, ::Val{P}) where {P} = Move(Cube(m)^P)
 
 # Sequence of moves
 Move(ms::AbstractVector{<:AbstractMove}) = prod(ms)

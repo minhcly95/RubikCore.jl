@@ -1,17 +1,16 @@
 name = "RubikCore"
 uuid = "a6206385-a85b-45a1-9870-e715cb6a9b8e"
 authors = ["Bui Quang Minh <minhcly95@outlook.com>"]
-version = "0.1.0-DEV.5"
+version = "0.1.0"
 
 [deps]
 Crayons = "a8cc5b0e-0ffa-5ad4-8c14-923d3ee1735f"
+FastPerms = "4f7ee846-71eb-4ef0-b8b4-b98ea9e842ee"
 Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
-StaticArrays = "90137ffa-7385-5640-81b9-e52037218182"
 
 [compat]
 Crayons = "4"
-StaticArrays = "1"
-julia = "1.6"
+julia = "1.9"
 
 [extras]
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"

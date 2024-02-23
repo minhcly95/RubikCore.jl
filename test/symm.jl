@@ -6,12 +6,12 @@
         end
     end
 
-    @testset "Mirrored" begin
-        @test !any(is_mirrored.(UNMIRRORED_SYMMS))
-        @test all(is_mirrored.(MIRRORED_SYMMS))
+    @testset "Evenness" begin
+        @test all(iseven.(EVEN_SYMMS))
+        @test all(isodd.(ODD_SYMMS))
         for _ in 1:100
             a, b = rand(ALL_SYMMS, 2)
-            @test is_mirrored(a * b) == is_mirrored(a) ⊻ is_mirrored(b)
+            @test isodd(a * b) == isodd(a) ⊻ isodd(b)
         end
     end
 

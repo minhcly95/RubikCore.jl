@@ -50,7 +50,7 @@ end
 
 function net(c::Cube)
     sm = singmaster(c)
-    centers = [rotate(f, c.center') for f in ALL_FACES]
+    centers = [(c.center')(f) for f in ALL_FACES]
     sm = sm[7:end]
     return (
         @_net_face_from_sm(sm, 45, 7, 41, 10, centers[1], 4, 49, 1, 37),

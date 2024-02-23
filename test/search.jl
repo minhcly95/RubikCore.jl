@@ -1,7 +1,17 @@
+# Next face in a canonical sequence
+const CANONSEQ_NEXT = (
+    (Front, Right, Down, Back, Left),
+    (Up, Right, Down, Back, Left),
+    (Up, Front, Down, Back, Left),
+    (Front, Right, Back, Left),
+    (Up, Right, Down, Left),
+    (Up, Front, Down, Back),
+)
+
 function search_recur(cube, d, all_pos, last_face)
     push!(all_pos, cube)
     (d == 0) && return
-    faces = isnothing(last_face) ? ALL_FACES : RubikCore.canonseq_next_faces(last_face)
+    faces = isnothing(last_face) ? ALL_FACES : @inbounds CANONSEQ_NEXT[last_face]
     for f in faces, t in 1:3
         ft = FaceTurn(f, t)
         search_recur(cube * ft, d - 1, all_pos, f)
@@ -103,12 +113,12 @@ end
                 end
 
                 for move in FACE_TURNS
-                    next_cube = canonicalize(cube * move, true)
+                    next_cube = canonicalize(cube * move, include_inv=true)
                     if !haskey(depth, next_cube)
                         depth[next_cube] = d + 1
                         push!(all_pos, next_cube)
                     end
-                    next_cube = canonicalize(cube' * move, true)
+                    next_cube = canonicalize(cube' * move, include_inv=true)
                     if !haskey(depth, next_cube)
                         depth[next_cube] = d + 1
                         push!(all_pos, next_cube)

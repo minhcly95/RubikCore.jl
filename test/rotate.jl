@@ -4,15 +4,15 @@
     @testset "Face rotation" begin
         rotated = [(Right, Back, Down), (Front, Down, Right), (Right, Down, Front), (Back, Right, Up), (Up, Left, Front)]
         for (s, f) in zip(SS, rotated)
-            @test rotate(Up, s) == f[1]
-            @test rotate(Front, s) == f[2]
-            @test rotate(Right, s) == f[3]
+            @test s(Up) == f[1]
+            @test s(Front) == f[2]
+            @test s(Right) == f[3]
         end
     end
 
     @testset "Cube rotation" begin
         for (s, c, r) in zip(SS, AS, RS)
-            @test rotate(c, s) == r
+            @test s(c) == r
         end
     end
 
@@ -25,7 +25,7 @@
             [F, U, F', U', D, F2, U', F, U', F', U, F', U, F2, D'],
         ]
         for (s, seq, rot) in zip(SS, [PLL_T, PLL_Ja, PLL_Nb, PLL_E, PLL_Gd], rotated)
-            @test rotate.(seq, (s,)) == rot
+            @test s.(seq) == rot
         end
     end
 
@@ -33,15 +33,15 @@
         for _ in 1:100
             symm = rand(ALL_SYMMS)
             seq = rand([FACE_TURNS..., CUBE_ROTATIONS..., SLICE_TURNS..., WIDE_TURNS...], 50)
-            rotated_seq = [rotate(m, symm) for m in seq]
-            cube = rotate(rotate(Cube(), symm') * prod(seq), symm)
+            rotated_seq = [symm(m) for m in seq]
+            cube = symm' * Cube(prod(seq)) * symm
             @test Cube(rotated_seq) == cube
         end
     end
 
     @testset "Normalization" begin
         for c in rand(Cube, 100)
-            d = rotate(c, rand(ALL_SYMMS))
+            d = rand(ALL_SYMMS)(c)
             @test normalize(c).center == Symm(1)
             @test normalize(c) == normalize(d)
         end
@@ -49,7 +49,7 @@
 
     @testset "Congruence" begin
         for c in rand(Cube, 100)
-            d = rotate(c, rand(ALL_SYMMS))
+            d = rand(ALL_SYMMS)(c)
             @test is_congruent(c, d)
         end
     end

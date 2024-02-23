@@ -1,51 +1,48 @@
 module RubikCore
 
-using StaticArrays
+using FastPerms
 using Random
 using Crayons
 
-# Pre Literals definitions
-include("macros.jl")
+include("int_struct.jl")
+include("make_tuple.jl")
+
 include("face.jl")
 include("symm.jl")
-include("cubies.jl")
+include("edge_state.jl")
+include("corner_state.jl")
 include("cube.jl")
+include("singmaster.jl")
 include("move.jl")
 include("rotate.jl")
+include("literal-moves.jl")
+include("faceturn.jl")
+include("random.jl")
 include("canon.jl")
-include("singmaster.jl")
 include("display.jl")
-include("utils.jl")
 
 export AbstractMove
-export Face, Up, Front, Right, Down, Back, Left, opposite, ALL_FACES
-export Symm, is_mirrored, @symm_str, ALL_SYMMS, UNMIRRORED_SYMMS, MIRRORED_SYMMS
-export Edge, Corner, perm, ori, slot_string
+export Face, Up, Front, Right, Down, Back, Left, opposite
+export Symm, @symm_str
+export parity
 export Cube, singmaster, parse_singmaster
 export Move, @seq_str
-export rotate, normalize, is_congruent
+export normalize, is_congruent
+export FaceTurn, twist
 export canonicalize
-export net
 
 # Literals submodule
 module Literals
 using ..RubikCore
-import ..RubikCore: Move, Face, ALL_EDGES, ALL_CORNERS, N_FACES, N_EDGES, N_CORNERS, I
+import ..RubikCore: @_reexport_move_powers
 
-include("literal-moves.jl")
-
+import ..RubikCore: FACE_TURNS, CUBE_ROTATIONS, SLICE_TURNS, WIDE_TURNS
 export FACE_TURNS, CUBE_ROTATIONS, SLICE_TURNS, WIDE_TURNS
-@_export_move_powers(1:3, U, F, R, D, B, L)
-@_export_move_powers(1:3, x, y, z)
-@_export_move_powers(1:3, M, E, S)
-@_export_move_powers(1:3, u, f, r, d, b, l)
 
+@_reexport_move_powers(1:3, U, F, R, D, B, L)
+@_reexport_move_powers(1:3, x, y, z)
+@_reexport_move_powers(1:3, M, E, S)
+@_reexport_move_powers(1:3, u, f, r, d, b, l)
 end
-
-# Post Literals definitions
-include("faceturn.jl")
-include("random.jl")
-
-export FaceTurn, twist, ALL_FACETURNS
 
 end

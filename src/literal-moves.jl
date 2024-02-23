@@ -5,7 +5,7 @@ macro _define_move_powers(range, moves...)
         emove = esc(move)
         for i in eval(range)
             name = esc(Symbol("$move$i"))
-            push!(expr.args, :(const $name = $emove ^ $i))
+            push!(expr.args, :(const $name = $emove^$i))
         end
     end
     return expr
@@ -22,21 +22,19 @@ macro _tuple_move_powers(range, moves...)
     return tuple
 end
 
-macro _group_move_powers(group_name, range, moves...)
-    group_name = esc(group_name)
-    return :(const $group_name = @_tuple_move_powers($range, $(moves...)))
-end
-
-macro _export_move_powers(range, moves...)
-    expr = Expr(:export)
+macro _reexport_move_powers(range, moves...)
+    symbols = []
     for move in moves
-        push!(expr.args, esc(move))
+        push!(symbols, move)
         for i in eval(range)
-            name = esc(Symbol("$move$i"))
-            push!(expr.args, name)
+            name = Symbol("$move$i")
+            push!(symbols, name)
         end
     end
-    return expr
+
+    import_expr = Expr(:import, Expr(:(:), Expr(:., :., :., :RubikCore), [Expr(:., s) for s in symbols]...))
+    export_expr = Expr(:export, symbols...)
+    return :($import_expr; $export_expr)
 end
 
 macro _define_literal_dict(moves...)
@@ -77,53 +75,46 @@ end
 
 # Face turns
 function _make_basic_face_turns()
-    EDGE_TWIST_PERM = ((1, 3, 4, 2), (4, 8, 12, 7), (3, 6, 11, 8), (10, 12, 11, 9), (1, 5, 9, 6), (2, 7, 10, 5))
-    CORNER_TWIST_PERM = ((1, 2, 4, 3), (3, 4, 8, 7), (4, 2, 6, 8), (5, 7, 8, 6), (2, 1, 5, 6), (1, 3, 7, 5))
-    EDGE_CHANGE = (0, 0, 1, 0, 0, 1)
-    CORNER_CHANGE = ((0, 0, 0, 0), (1, 2, 1, 2), (1, 2, 1, 2), (0, 0, 0, 0), (1, 2, 1, 2), (1, 2, 1, 2))
-
-    edge_trans = [e for _ in ALL_FACES, e in ALL_EDGES]
-    corner_trans = [c for _ in ALL_FACES, c in ALL_CORNERS]
-
-    for f in 1:N_FACES
-        for i in 1:4
-            ii = mod1(i + 1, 4)
-            for o in 1:2
-                oo = mod1(o + EDGE_CHANGE[f], 2)
-                edge_trans[f, Int(Edge(EDGE_TWIST_PERM[f][i], o))] = Edge(EDGE_TWIST_PERM[f][ii], oo)
-            end
-            for o in 1:3
-                oo = mod1(o + CORNER_CHANGE[f][i], 3)
-                corner_trans[f, Int(Corner(CORNER_TWIST_PERM[f][i], o))] = Corner(CORNER_TWIST_PERM[f][ii], oo)
-            end
-        end
-    end
+    EDGE_TURN_PERM = (
+        perm"(1 7 5 3)(2 8 6 4)",
+        perm"(1 10 17 15)(2 9 18 16)",
+        perm"(3 12 19 9)(4 11 20 10)",
+        perm"(17 19 21 23)(18 20 22 24)",
+        perm"(5 14 21 11)(6 13 22 12)",
+        perm"(7 16 23 13)(8 15 24 14)",
+    )
+    CORNER_TURN_PERM = (
+        perm"(1 10 7 4)(2 11 8 5)(3 12 9 6)",
+        perm"(1 14 22 11)(2 15 23 12)(3 13 24 10)",
+        perm"(1 6 16 15)(2 4 17 13)(3 5 18 14)",
+        perm"(13 16 19 22)(14 17 20 23)(15 18 21 24)",
+        perm"(4 9 19 18)(5 7 20 16)(6 8 21 17)",
+        perm"(7 12 22 21)(8 10 23 19)(9 11 24 20)",
+    )
 
     return Tuple(
-        Move(Cube(Symm(),
-            Tuple(edge_trans[f, Int(Edge(i, 1))] for i in 1:N_EDGES),
-            Tuple(corner_trans[f, Int(Corner(i, 1))] for i in 1:N_CORNERS)))
-        for f in 1:N_FACES)
+        Move(Cube(Symm(), EdgeState(EDGE_TURN_PERM[f]), CornerState(CORNER_TURN_PERM[f])))
+        for f in ALL_FACES)
 end
 
 const U, F, R, D, B, L = _make_basic_face_turns()
 @_define_move_powers(1:3, U, F, R, D, B, L)
-@_group_move_powers(FACE_TURNS, 1:3, U, F, R, D, B, L)
+const FACE_TURNS = @_tuple_move_powers(1:3, U, F, R, D, B, L)
 
 # Whole cube rotations
-const x, y, z = Move(rotate(Cube(), symm"BUR")), Move(rotate(Cube(), symm"ULF")), Move(rotate(Cube(), symm"RFD"))
+const x, y, z = Move(Cube() * symm"BUR"), Move(Cube() * symm"ULF"), Move(Cube() * symm"RFD")
 @_define_move_powers(1:3, x, y, z)
-@_group_move_powers(CUBE_ROTATIONS, 1:3, x, y, z)
+const CUBE_ROTATIONS = @_tuple_move_powers(1:3, x, y, z)
 
 # Slice turn
 const M, E, S = R * L' * x', U * D' * y', F' * B * z
 @_define_move_powers(1:3, M, E, S)
-@_group_move_powers(SLICE_TURNS, 1:3, M, E, S)
+const SLICE_TURNS = @_tuple_move_powers(1:3, M, E, S)
 
 # Wide turns
 const u, f, r, d, b, l = D * y, B * z, L * x, U * y', F * z', R * x'
 @_define_move_powers(1:3, u, f, r, d, b, l)
-@_group_move_powers(WIDE_TURNS, 1:3, u, f, r, d, b, l)
+const WIDE_TURNS = @_tuple_move_powers(1:3, u, f, r, d, b, l)
 
 # Print
 const _LITERAL_MOVE_TO_STR = @_define_literal_dict(U, F, R, D, B, L, u, f, r, d, b, l, x, y, z, M, E, S)
