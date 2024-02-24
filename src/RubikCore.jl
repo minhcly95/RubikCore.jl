@@ -24,8 +24,7 @@ include("display.jl")
 export AbstractMove
 export Face, Up, Front, Right, Down, Back, Left, opposite
 export Symm, @symm_str
-export parity
-export Cube, singmaster, parse_singmaster
+export Cube
 export Move, @seq_str
 export normalize, is_congruent
 export FaceTurn, twist

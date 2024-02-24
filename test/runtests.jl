@@ -1,6 +1,6 @@
 using RubikCore, RubikCore.Literals
 using RubikCore:
-    I, ALL_FACES, ALL_SYMMS, EVEN_SYMMS, ODD_SYMMS, ALL_FACETURNS
+    I, ALL_FACES, ALL_SYMMS, EVEN_SYMMS, ODD_SYMMS, ALL_FACETURNS, singmaster
 using Test
 
 @testset "RubikCore.jl" begin

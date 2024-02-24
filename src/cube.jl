@@ -26,10 +26,10 @@ Base.:*(a::Cube, b::Cube) = Cube(a.center * b.center, a.edges * b.edges, a.corne
 Base.inv(c::Cube) = Cube(inv(c.center), inv(c.edges), inv(c.corners))
 Base.adjoint(c::Cube) = inv(c)
 
-# A valid cube consists of a valid edge state, a valid corner state,
+# A valid cube consists of an even center, a valid edge state, a valid corner state,
 # and matching permutation parity of edges and corners.
 Base.isvalid(c::Cube) =
-    isvalid(c.edges) && isvalid(c.corners) &&
+    iseven(c.center) && isvalid(c.edges) && isvalid(c.corners) &&
     !(isodd(edge_perm(c.edges)) ⊻ isodd(corner_perm(c.corners)))
 
 # Power
