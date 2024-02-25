@@ -8,13 +8,13 @@ const EDGE_DEGREE = N_EDGES * SIDES_PER_EDGE
 #
 #   Top Layer       Middle Layer       Bottom Layer
 #       B                 B                 B
-#       6              13   12              22
-#    ┌─────┐         14┌─────┐11         ┌─────┐
+#       6              13   11              22
+#    ┌─────┐         14┌─────┐12         ┌─────┐
 #    │  5  │           │     │           │  21 │
 # L 8│7 U 3│4 R     L  │     │  R    L 24│23 19│20 R
 #    │  1  │           │     │           │  17 │
-#    └─────┘         15└─────┘10         └─────┘
-#       2              16    9              18
+#    └─────┘         16└─────┘10         └─────┘
+#       2              15    9              18
 #       F                 F                 F      
 #
 # Note that every edge is represented by a consecutive pair {2i-1,2i}.
@@ -77,7 +77,7 @@ Base.isvalid(e::EdgeState) = iseven(e)
 # The face of each side
 const EDGE_FACE = (
     Up, Front, Up, Right, Up, Back, Up, Left,
-    Front, Right, Right, Back, Back, Left, Left, Front,
+    Front, Right, Back, Right, Back, Left, Front, Left,
     Down, Front, Down, Right, Down, Back, Down, Left
 )
 

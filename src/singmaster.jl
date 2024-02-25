@@ -1,7 +1,7 @@
 const SM_SOLVED = "UF UR UB UL DF DR DB DL FR FL BR BL UFR URB UBL ULF DRF DFL DLB DBR"
 
 # SM string position → slot mapping
-const SM_EDGE_SLOTS = SPerm{EDGE_DEGREE,UInt8}(1, 2, 3, 4, 5, 6, 7, 8, 17, 18, 19, 20, 21, 22, 23, 24, 9, 10, 16, 15, 12, 11, 13, 14)
+const SM_EDGE_SLOTS = SPerm{EDGE_DEGREE,UInt8}(1, 2, 3, 4, 5, 6, 7, 8, 17, 18, 19, 20, 21, 22, 23, 24, 9, 10, 15, 16, 11, 12, 13, 14)
 const SM_CORNER_SLOTS = SPerm{CORNER_DEGREE,UInt8}(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 22, 23, 24, 19, 20, 21, 16, 17, 18)
 
 # Token → side mapping
