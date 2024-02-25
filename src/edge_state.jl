@@ -81,3 +81,34 @@ const EDGE_FACE = (
     Down, Front, Down, Right, Down, Back, Down, Left
 )
 
+# Low-level manipulation
+@inline function flip_edge(e::EdgeState, i::Integer)
+    @boundscheck 1 <= i <= N_EDGES || throw(ArgumentError("index out-of-range (must be in 1:$N_EDGES)"))
+    ref = Ref(e)
+    ptr = Base.unsafe_convert(Ptr{UInt8}, pointer_from_objref(ref))
+    GC.@preserve ref begin
+        j = unsafe_load(ptr, 2i - 1)
+        k = unsafe_load(ptr, 2i)
+        unsafe_store!(ptr, k, 2i - 1)
+        unsafe_store!(ptr, j, 2i)
+    end
+    return ref[]
+end
+
+@inline function swap_edges(e::EdgeState, i::Integer, j::Integer)
+    @boundscheck (1 <= i <= N_EDGES && 1 <= j <= N_EDGES) || throw(ArgumentError("index out-of-range (must be in 1:$N_EDGES)"))
+    ref = Ref(e)
+    ptr = Base.unsafe_convert(Ptr{UInt8}, pointer_from_objref(ref))
+    GC.@preserve ref begin
+        m = unsafe_load(ptr, 2i - 1)
+        n = unsafe_load(ptr, 2i)
+        p = unsafe_load(ptr, 2j - 1)
+        q = unsafe_load(ptr, 2j)
+        unsafe_store!(ptr, p, 2i - 1)
+        unsafe_store!(ptr, q, 2i)
+        unsafe_store!(ptr, m, 2j - 1)
+        unsafe_store!(ptr, n, 2j)
+    end
+    return ref[]
+end
+

@@ -98,3 +98,50 @@ const CORNER_FACE = (
     Down, Front, Left,
 )
 
+# Low-level manipulation
+@inline function twist_corner(c::CornerState, i::Integer, twist::Integer)
+    @boundscheck 1 <= i <= N_CORNERS || throw(ArgumentError("index out-of-range (must be in 1:$N_CORNERS)"))
+
+    twist = mod(twist, 3)
+    (twist == 0) && return c
+
+    ref = Ref(c)
+    ptr = Base.unsafe_convert(Ptr{UInt8}, pointer_from_objref(ref))
+    GC.@preserve ref begin
+        j = unsafe_load(ptr, 3i - 2)
+        k = unsafe_load(ptr, 3i - 1)
+        l = unsafe_load(ptr, 3i)
+        if twist == 1
+            unsafe_store!(ptr, k, 3i - 2)
+            unsafe_store!(ptr, l, 3i - 1)
+            unsafe_store!(ptr, j, 3i)
+        else
+            unsafe_store!(ptr, l, 3i - 2)
+            unsafe_store!(ptr, j, 3i - 1)
+            unsafe_store!(ptr, k, 3i)
+        end
+    end
+    return ref[]
+end
+
+@inline function swap_corners(c::CornerState, i::Integer, j::Integer)
+    @boundscheck (1 <= i <= N_CORNERS && 1 <= j <= N_CORNERS) || throw(ArgumentError("index out-of-range (must be in 1:$N_CORNERS)"))
+    ref = Ref(c)
+    ptr = Base.unsafe_convert(Ptr{UInt8}, pointer_from_objref(ref))
+    GC.@preserve ref begin
+        m = unsafe_load(ptr, 3i - 2)
+        n = unsafe_load(ptr, 3i - 1)
+        o = unsafe_load(ptr, 3i)
+        p = unsafe_load(ptr, 3j - 2)
+        q = unsafe_load(ptr, 3j - 1)
+        r = unsafe_load(ptr, 3j)
+        unsafe_store!(ptr, p, 3i - 2)
+        unsafe_store!(ptr, q, 3i - 1)
+        unsafe_store!(ptr, r, 3i)
+        unsafe_store!(ptr, m, 3j - 2)
+        unsafe_store!(ptr, n, 3j - 1)
+        unsafe_store!(ptr, o, 3j)
+    end
+    return ref[]
+end
+
