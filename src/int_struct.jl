@@ -15,7 +15,7 @@ macro int_struct(struct_blk)
     elseif name_arg isa Expr && name_arg.head == :(<:)
         struct_str = string(name_arg.args[1])
         struct_name = esc(name_arg.args[1])
-        parent_type = eval(name_arg.args[2])
+        parent_type = esc(name_arg.args[2])
     end
 
     # Extract the maximum value of the enum
