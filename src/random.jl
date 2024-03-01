@@ -70,7 +70,7 @@ function Base.rand(rng::AbstractRNG, ::Random.SamplerType{Cube})
         edges = EdgeState(edges.perm * SPerm(3, 4, 1, 2))
     end
 
-    return Cube(center, edges, corners)
+    return Cube(Symm(), edges, corners) * center
 end
 
 Base.rand(rng::AbstractRNG, ::Random.SamplerType{Move}) = rand(rng, FACE_TURNS)
