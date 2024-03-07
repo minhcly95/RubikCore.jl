@@ -63,6 +63,6 @@ end
 Base.instances(S::Type{<:IntStruct}) = S.(typemin(S):typemax(S))
 
 # Get index shorthand
-Base.@propagate_inbounds Base.getindex(a::AbstractArray, ss::IntStruct...) = getindex(a, (convert(Int, s) for s in ss)...)
+Base.@propagate_inbounds Base.getindex(a::AbstractArray, s::IntStruct) = getindex(a, convert(Int, s))
 Base.@propagate_inbounds Base.getindex(a::Tuple, s::IntStruct) = getindex(a, convert(Int, s))
 
